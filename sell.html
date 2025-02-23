@@ -1,0 +1,89 @@
+<!-- sell.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Books | BookSwap</title>
+    <link rel="stylesheet" href="buy.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <a href="suraj.html" class="logo">📚 BookSwap</a>
+            <nav class="nav-links">
+                <a href="buy.html" class="nav-link">Browse Books</a>
+                <a href="suraj.html" class="nav-link active">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Attractive Book Selling Card -->
+        <div class="card">
+          <h2>Sell Your Old Books!</h2>
+          <p>
+            Unlock the hidden value of your old books! Sell them at the perfect price or explore our curated listings to find your next favorite read. Join us today and turn every page into profit!
+          </p>
+        </div>
+
+    <div class="container">
+        <form class="sell-form" id="sellForm">
+            <h2>List Your Book</h2>
+            
+            <div class="form-group">
+                <label>Book Title</label>
+                <input type="text" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Author</label>
+                <input type="text" name="author" required>
+            </div>
+
+            <div class="form-group">
+                <label>Price (Rs)</label>
+                <input type="number" name="price" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label>Condition</label>
+                <select name="condition" required>
+                    <option value="">Select Condition</option>
+                    <option>New</option>
+                    <option>Like New</option>
+                    <option>Good</option>
+                    <option>Fair</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" required>
+            </div>
+
+            <div class="form-group">
+                <label>Contact Number</label>
+                <input type="tel" name="phone" pattern="[0-9]{10}" required 
+                    title="10-digit phone number">
+            </div>
+
+            
+            <!-- sell.html -->
+            <label for="fileInput">Your book photo (less than 1 MB)</label>
+           
+            
+
+<input type="file" id="fileInput" multiple accept="image/*" required
+onchange="validateFiles(this)">
+
+<!-- buy.html -->
+<div class="book-grid" id="bookGrid"></div>
+
+            <button type="submit" class="submit-btn">List My Book</button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

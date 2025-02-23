@@ -1,0 +1,490 @@
+:root {
+  --primary: #2A9D8F;
+  --secondary: #264653;
+  --accent: #E9C46A;
+  --light: #F8F9FA;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: var(--light);
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.main-header {
+  background: white;
+  padding: 1rem 2rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--secondary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius);
+  color: var(--secondary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  background: rgba(42,157,143,0.1);
+}
+
+/* Common Container Styles */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+/* Sell Page Styles */
+.sell-form {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #eee;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(42,157,143,0.2);
+}
+
+.upload-box {
+  border: 2px dashed #ddd;
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-box:hover {
+  border-color: var(--primary);
+  background: rgba(42,157,143,0.05);
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.submit-btn {
+  background: var(--primary);
+  color: white;
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Buy Page Styles */
+.search-bar {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #eee;
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.book-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.book-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+}
+
+.book-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.book-details {
+  padding: 1.5rem;
+}
+
+.book-price {
+  color: var(--primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.book-info {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+}
+
+.remove-btn {
+  background: rgba(255,0,0,0.1);
+  color: #ff4444;
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.remove-btn:hover {
+  background: rgba(255,0,0,0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+      flex-direction: column;
+      gap: 1rem;
+  }
+
+  .nav-links {
+      flex-direction: column;
+      width: 100%;
+      text-align: center;
+  }
+
+  .preview-grid {
+      grid-template-columns: repeat(2, 1fr);
+  }
+}/* Ensure preview images are visible */
+.preview-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 5px;
+  border: 2px solid #eee;
+}
+
+/* Error states */
+input:invalid, select:invalid {
+  border-color: #ff4444;
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+}
+/* styles.css */
+.preview-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  margin: 5px;
+  border-radius: 8px;
+  border: 2px solid #eee;
+}
+
+.book-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+@keyframes highlight {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.book-card {
+  animation: highlight 0.5s ease;
+}
+.card {
+  background: linear-gradient(135deg, #89f7fe, #66a6ff);
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  padding: 30px;
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sell-form {
+  width: 100%;
+  max-width: 500px;
+}
+.owner-controls {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn, .remove-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.edit-btn {
+  background: #3498db;
+  color: white;
+}
+
+.remove-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+@keyframes highlight {
+  0% { background: transparent; }
+  50% { background: #fff3d4; }
+  100% { background: transparent; }
+}
+/* Style for labels within the sell form */
+.sell-form label {
+  display: block;          /* Places label on its own line */
+  font-size: 1rem;         /* Adjust the font size as needed */
+  font-weight: 500;        /* Gives a medium font weight */
+  color: var(--secondary); /* Uses your secondary color variable */
+  margin-bottom: 0.5rem;   /* Adds space between the label and input */
+  text-transform: capitalize; /* Optional: capitalizes each word */
+}
+/* buy.css - Enhanced Version */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  padding: 2rem;
+}
+
+.book-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+}
+
+.book-images {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.book-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.book-image:hover {
+  transform: scale(1.03);
+}
+
+.book-details {
+  padding: 1.5rem;
+}
+
+.book-details h3 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem;
+  color: #2c3e50;
+  line-height: 1.3;
+}
+
+.book-author {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+}
+
+.book-price {
+  color: #27ae60;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.book-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #34495e;
+}
+
+.book-condition {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.book-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #e67e22;
+}
+
+.book-phone {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #2980b9;
+}
+
+.owner-controls {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn, .remove-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.edit-btn {
+  background: #3498db;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #2980b9;
+}
+
+.remove-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.remove-btn:hover {
+  background: #c0392b;
+}
+
+@keyframes highlight {
+  0% { background: transparent; }
+  50% { background: #f9f9f9; }
+  100% { background: transparent; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      padding: 1rem;
+  }
+  
+  .book-images {
+      height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-card {
+      margin-bottom: 1.5rem;
+  }
+  
+  .book-images {
+      height: 280px;
+  }
+}
