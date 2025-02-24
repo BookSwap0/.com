@@ -1,3 +1,13 @@
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
+  authDomain: "bookswap-bac8b.firebaseapp.com",
+  projectId: "bookswap-bac8b",
+  storageBucket: "bookswap-bac8b.firebasestorage.app",
+  messagingSenderId: "145814837614",
+  appId: "1:145814837614:web:7d52eb3c29fe659688097f",
+  measurementId: "G-Q33CEMLPZ5"
+};
 // Initialize Firebase
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
