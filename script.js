@@ -31,7 +31,7 @@ const db = getFirestore(app);
 
 // User Session Management
 let currentUser = sessionStorage.getItem('currentUser') || prompt("Please enter your name:");
-sessionStorage.setItem('currentUser', currentUser);
+localStorage.setItem('currentUser', currentUser);
 
 // Book Manager Module
 const BookManager = {
