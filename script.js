@@ -28,10 +28,39 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// User Session Management with Enhanced UI
+let currentUser = localStorage.getItem('currentUser');
+const usernameModal = document.getElementById('usernameModal');
+const usernameInput = document.getElementById('usernameInput');
+const usernameSubmit = document.getElementById('usernameSubmit');
 
-// User Session Management
-let currentUser = localStorage.getItem('currentUser') || prompt("Please enter your name:");
-localStorage.setItem('currentUser', currentUser);
+if (!currentUser) {
+    usernameModal.style.display = 'flex';
+    
+    const handleUsernameSubmit = () => {
+        const name = usernameInput.value.trim();
+        if (name) {
+            currentUser = name;
+            localStorage.setItem('currentUser', name);
+            usernameModal.style.display = 'none';
+        } else {
+            usernameInput.placeholder = "Please enter your name!";
+            usernameInput.style.borderColor = "#e74c3c";
+            setTimeout(() => {
+                usernameInput.style.borderColor = "#3498db";
+                usernameInput.placeholder = "Enter your name";
+            }, 2000);
+        }
+    };
+
+    usernameSubmit.addEventListener('click', handleUsernameSubmit);
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleUsernameSubmit();
+    });
+    
+    // Auto-focus input
+    setTimeout(() => usernameInput.focus(), 100);
+}
 
 // Book Manager Module
 const BookManager = {
