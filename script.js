@@ -1,4 +1,5 @@
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// script.js - Complete Firebase Integration
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
@@ -8,23 +9,16 @@ const firebaseConfig = {
   appId: "1:145814837614:web:7d52eb3c29fe659688097f",
   measurementId: "G-Q33CEMLPZ5"
 };
-// Initialize Firebase
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_BUCKET.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// User Session
 let currentUser = sessionStorage.getItem('currentUser') || prompt("Please enter your name:");
 sessionStorage.setItem('currentUser', currentUser);
 
+// Book Manager
 const BookManager = {
     MAX_IMAGES: 5,
     MAX_SIZE_MB: 1,
@@ -100,9 +94,45 @@ const BookManager = {
 
 // Sell Page Implementation
 if (document.getElementById('sellForm')) {
-    // ... [Keep existing sell page DOM code unchanged] ...
+    const form = document.getElementById('sellForm');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
 
-    // Modified form submission handler
+    // Load existing data for editing
+    if (editId) {
+        const doc = await db.collection("books").doc(editId).get();
+        if (doc.exists && doc.data().owner === currentUser) {
+            const book = doc.data();
+            form.title.value = book.title;
+            form.author.value = book.author;
+            form.price.value = book.price;
+            form.condition.value = book.condition;
+            form.location.value = book.location;
+            form.phone.value = book.phone;
+            previewContainer.innerHTML = book.images.map(img => `
+                <img src="${img}" class="preview-img">
+            `).join('');
+        }
+    }
+
+    fileInput.addEventListener('change', function() {
+        previewContainer.innerHTML = '';
+        const files = Array.from(this.files).slice(0, BookManager.MAX_IMAGES);
+        
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.className = 'preview-img';
+                img.src = e.target.result;
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitBtn = form.querySelector('button[type="submit"]');
@@ -136,7 +166,41 @@ if (document.getElementById('bookGrid')) {
     const bookGrid = document.getElementById('bookGrid');
     const searchInput = document.getElementById('searchInput');
 
-    // Real-time listener
+    const renderBooks = (books) => {
+        bookGrid.innerHTML = books.map(book => `
+            <div class="book-card" data-id="${book.id}">
+                <div class="book-images">
+                    ${book.images.map(img => `
+                        <img src="${img}" class="book-image" alt="${book.title}">
+                    `).join('')}
+                </div>
+                <div class="book-details">
+                    <h3>${book.title}</h3>
+                    <p class="book-author">By ${book.author}</p>
+                    <span class="book-condition">${book.condition}</span>
+                    <div class="book-price">₹${book.price.toFixed(2)}</div>
+                    <div class="book-info">
+                        <span class="book-location">📍 ${book.location}</span>
+                        <span class="book-phone">📞 ${book.phone}</span>
+                    </div>
+                    ${book.owner === currentUser ? `
+                        <div class="owner-controls">
+                            <button class="edit-btn" 
+                                onclick="location.href='sell.html?edit=${book.id}'">
+                                Edit
+                            </button>
+                            <button class="remove-btn" 
+                                onclick="BookManager.deleteListing('${book.id}')">
+                                Remove
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    };
+
+    // Real-time updates
     db.collection("books").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         const books = snapshot.docs.map(doc => ({
             id: doc.id,
@@ -145,26 +209,6 @@ if (document.getElementById('bookGrid')) {
         renderBooks(books);
         highlightNewBook();
     });
-
-    const renderBooks = (books) => {
-        bookGrid.innerHTML = books.map(book => `
-            <div class="book-card" data-id="${book.id}">
-                <!-- Keep existing book card structure -->
-                ${book.owner === currentUser ? `
-                    <div class="owner-controls">
-                        <button class="edit-btn" 
-                            onclick="location.href='sell.html?edit=${book.id}'">
-                            Edit
-                        </button>
-                        <button class="remove-btn" 
-                            onclick="BookManager.deleteListing('${book.id}')">
-                            Remove
-                        </button>
-                    </div>
-                ` : ''}
-            </div>
-        `).join('');
-    };
 
     // Search functionality
     searchInput.addEventListener('input', () => {
@@ -180,5 +224,16 @@ if (document.getElementById('bookGrid')) {
         });
     });
 
-    // Highlight new book (keep existing implementation)
+    const highlightNewBook = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const newId = urlParams.get('new');
+        if (newId) {
+            history.replaceState(null, '', 'buy.html');
+            const newBook = bookGrid.querySelector(`[data-id="${newId}"]`);
+            if (newBook) {
+                newBook.scrollIntoView({ behavior: 'smooth' });
+                newBook.style.animation = 'highlight 1.5s ease 2';
+            }
+        }
+    };
 }
