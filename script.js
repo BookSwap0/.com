@@ -1,4 +1,4 @@
-// script.js - Final Working Version with Corrections
+// script.js - Final Working Version with Deletion Fix
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { 
   getFirestore, 
@@ -44,7 +44,6 @@ const BookManager = {
         reject(`Image exceeds ${this.MAX_SIZE_MB}MB`);
         return;
       }
-
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = () => reject('Error reading image');
@@ -139,7 +138,6 @@ async function initializeSellPage() {
   fileInput.addEventListener('change', function() {
     previewContainer.innerHTML = '';
     const files = Array.from(this.files).slice(0, BookManager.MAX_IMAGES);
-    
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = e => {
@@ -268,3 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeBuyPage();
   }
 });
+
+// Expose BookManager globally so inline onclick handlers can access it
+window.BookManager = BookManager;
