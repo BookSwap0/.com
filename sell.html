@@ -8,21 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Main Header -->
   <header class="main-header">
     <div class="header-content container">
       <a href="index.html" class="logo">📚 BookSwap</a>
-      <nav class="nav-links">
-   
- 
-        <a href="buy.html" class="nav-link">Browse Books</a>
-      </nav>
-   
-    <nav class="mobile-menu">
       <a href="buy.html" class="mobile-nav-link">Browse</a>
-      <a href="index.html" class="mobile-nav-link">Home</a>
-      <a href="sell.html" class="mobile-nav-link">Sell</a>
-    </nav>
+      
+    </div>
+  </header>
+    
   </header>
 
   <!-- Hero Section -->
@@ -39,6 +32,9 @@
     <div class="form-container container">
       <form class="sell-form" id="sellForm">
         <h2 class="form-title">List Your Book</h2>
+        <!-- 
+          The form grid is set to one column by default (mobile), and switches to two columns on screens wider than 600px via CSS.
+        -->
         <div class="form-grid">
           <div class="form-group">
             <label for="title">Book Title</label>
