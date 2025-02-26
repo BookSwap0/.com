@@ -11,7 +11,8 @@ import {
   query, 
   orderBy,
   getDoc,
-  getDocs 
+  getDocs,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -112,7 +113,7 @@ const BookManager = {
         location: formData.location.trim(),
         phone: formData.phone.replace(/\D/g, '').slice(0, 10),
         images,
-        timestamp: new Date().toISOString()
+        timestamp: serverTimestamp()
       };
 
       if (isNaN(bookData.price) || bookData.price <= 0) {
