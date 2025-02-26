@@ -21,10 +21,10 @@ const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
   projectId: "bookswap-bac8b",
-  storageBucket: "bookswap-bac8b.firebasestorage.app", // Updated storageBucket
+  storageBucket: "bookswap-bac8b.firebasestorage.app", // Verify this value in your Firebase console
   messagingSenderId: "145814837614",
   appId: "1:145814837614:web:7d52eb3c29fe659688097f",
-  measurementId: "G-Q33CEMLPZ5" // New measurementId
+  measurementId: "G-Q33CEMLPZ5"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -214,38 +214,25 @@ async function initializeBuyPage() {
   const bookGrid = document.getElementById('bookGrid');
   const searchInput = document.getElementById('searchInput');
 
-  const createBookCard = (book) => {
-    return `
-      <div class="book-card" data-id="${book.id}">
-        <div class="book-images">
-          ${book.images.map(src => `<img src="${src}" class="book-image" alt="${book.title} cover">`).join('')}
-        </div>
-        <div class="book-details">
-          <h3>${book.title}</h3>
-          <p class="book-author">By ${book.author}</p>
-          <div class="book-meta">
-            <span class="book-price">₹${book.price.toFixed(2)}</span>
-            <span class="book-condition">${book.condition}</span>
-          </div>
-          <div class="book-location">📍 ${book.location}</div>
-          <div class="book-contact">📞 ${book.phone}</div>
-          ${book.owner === currentUser ? `
-            <div class="owner-controls">
-              <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
-              <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
-            </div>` : ""}
-        </div>
-      </div>
-    `;
-  };
+  if (!bookGrid) {
+    console.error("Element with ID 'bookGrid' not found.");
+    return;
+  }
 
+  // Query Firestore for books ordered by timestamp descending
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
+    if (snapshot.empty) {
+      console.log("No books found in Firestore.");
+      bookGrid.innerHTML = "<p>No books available</p>";
+      return;
+    }
     const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     bookGrid.innerHTML = books.map(createBookCard).join('');
     highlightNewBook();
   });
 
+  // Search functionality
   searchInput.addEventListener('input', async () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const snapshot = await getDocs(collection(db, "books"));
@@ -255,10 +242,14 @@ async function initializeBuyPage() {
         book.title.toLowerCase().includes(searchTerm) ||
         book.author.toLowerCase().includes(searchTerm)
       );
-    bookGrid.innerHTML = filteredBooks.map(createBookCard).join('');
+    if (filteredBooks.length === 0) {
+      bookGrid.innerHTML = "<p>No matching books found</p>";
+    } else {
+      bookGrid.innerHTML = filteredBooks.map(createBookCard).join('');
+    }
   });
 
-  const highlightNewBook = () => {
+  function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get('new');
     if (newId) {
@@ -269,14 +260,41 @@ async function initializeBuyPage() {
         newBookCard.style.animation = 'highlightPulse 1.5s ease 2';
       }
     }
-  };
+  }
+}
+
+// Helper: Create HTML for a single book card
+function createBookCard(book) {
+  return `
+    <div class="book-card" data-id="${book.id}">
+      <div class="book-images">
+        ${book.images.map(src => `<img src="${src}" class="book-image" alt="${book.title} cover">`).join('')}
+      </div>
+      <div class="book-details">
+        <h3>${book.title}</h3>
+        <p class="book-author">By ${book.author}</p>
+        <div class="book-meta">
+          <span class="book-price">₹${parseFloat(book.price).toFixed(2)}</span>
+          <span class="book-condition">${book.condition}</span>
+        </div>
+        <div class="book-location">📍 ${book.location}</div>
+        <div class="book-contact">📞 ${book.phone}</div>
+        ${book.owner === currentUser ? `
+          <div class="owner-controls">
+            <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
+            <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
+          </div>
+        ` : ""}
+      </div>
+    </div>
+  `;
 }
 
 // --- Initialize on DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('sellForm')) initializeSellPage();
   if (document.getElementById('bookGrid')) initializeBuyPage();
-  setupMobileMenu();
+  // Remove or define setupMobileMenu() if needed.
 });
 
 // Expose BookManager globally for inline HTML calls
