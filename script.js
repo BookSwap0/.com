@@ -271,29 +271,6 @@ async function initializeBuyPage() {
   };
 }
 
-// --- Mobile Menu Handling ---
-function setupMobileMenu() {
-  const hamburger = document.querySelector('.hamburger');
-  const mobileMenu = document.querySelector('.mobile-menu');
-  if (hamburger) {
-    hamburger.addEventListener('click', () => {
-      hamburger.classList.toggle('active');
-      mobileMenu.classList.toggle('active');
-    });
-  }
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.header-content') && mobileMenu.classList.contains('active')) {
-      hamburger.classList.remove('active');
-      mobileMenu.classList.remove('active');
-    }
-  });
-  document.querySelectorAll('.mobile-nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      hamburger.classList.remove('active');
-      mobileMenu.classList.remove('active');
-    });
-  });
-}
 
 // --- Initialize on DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
