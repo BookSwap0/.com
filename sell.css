@@ -270,3 +270,134 @@
   70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
   100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
 }
+/* Updated Header CSS */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  
+  .hamburger {
+    display: flex;
+    padding: 10px;
+    z-index: 1001;
+  }
+  
+  .mobile-menu {
+    position: fixed;
+    top: 60px;
+    right: -100%;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background: rgba(255, 255, 255, 0.98);
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    transition: right 0.3s ease-in-out;
+    z-index: 999;
+  }
+  
+  .mobile-menu.active {
+    right: 0;
+  }
+  
+  .mobile-nav-link {
+    padding: 15px;
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    transform: translateX(30px);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-menu.active .mobile-nav-link {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  .mobile-nav-link:nth-child(1) { transition-delay: 0.1s; }
+  .mobile-nav-link:nth-child(2) { transition-delay: 0.2s; }
+  .mobile-nav-link:nth-child(3) { transition-delay: 0.3s; }
+}
+
+/* Hamburger Icon Animation */
+.hamburger {
+  display: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.hamburger-box {
+  width: 30px;
+  height: 24px;
+  display: inline-block;
+  position: relative;
+}
+
+.hamburger-inner {
+  width: 100%;
+  height: 2px;
+  background-color: #333;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+}
+
+.hamburger-inner::before,
+.hamburger-inner::after {
+  content: "";
+  width: 100%;
+  height: 2px;
+  background-color: #333;
+  position: absolute;
+  left: 0;
+  transition: transform 0.3s ease;
+}
+
+.hamburger-inner::before {
+  top: -8px;
+}
+
+.hamburger-inner::after {
+  top: 8px;
+}
+
+.hamburger.active .hamburger-inner {
+  transform: rotate(45deg);
+}
+
+.hamburger.active .hamburger-inner::before {
+  transform: translateY(8px) rotate(90deg);
+}
+
+.hamburger.active .hamburger-inner::after {
+  transform: translateY(-8px) rotate(90deg);
+}
+
+/* Form Mobile Optimization */
+@media (max-width: 480px) {
+  .sell-form {
+    padding: 30px 20px;
+    border-radius: 15px;
+  }
+  
+  .form-title {
+    font-size: 1.8rem;
+  }
+  
+  .upload-box {
+    padding: 1.5rem;
+  }
+  
+  .preview-img {
+    height: 140px;
+  }
+  
+  .submit-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+}
