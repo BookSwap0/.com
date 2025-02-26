@@ -1,367 +1,302 @@
-/* ---------- Global Styles ---------- */
-:root {
-  --primary: #2A9D8F;
-  --secondary: #264653;
-  --accent: #E9C46A;
-  --light: #F8F9FA;
-  --dark: #1A1A1A;
-  --radius-lg: 24px;
-  --radius-md: 12px;
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+// script.js - Enhanced Version with Improved UI & Responsiveness
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  getDoc,
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
+  authDomain: "bookswap-bac8b.firebaseapp.com",
+  projectId: "bookswap-bac8b",
+  storageBucket: "bookswap-bac8b.firebasestorage.app",
+  messagingSenderId: "145814837614",
+  appId: "1:145814837614:web:7d52eb3c29fe659688097f",
+  measurementId: "G-Q33CEMLPZ5"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ---------------------------
+   User Session Management
+--------------------------- */
+let currentUser = localStorage.getItem('currentUser');
+const usernameModal = document.getElementById('usernameModal');
+const usernameInput = document.getElementById('usernameInput');
+const usernameSubmit = document.getElementById('usernameSubmit');
+
+if (!currentUser) {
+  usernameModal.style.display = 'flex';
+
+  const handleUsernameSubmit = () => {
+    const name = usernameInput.value.trim();
+    if (name) {
+      currentUser = name;
+      localStorage.setItem('currentUser', name);
+      usernameModal.style.display = 'none';
+    } else {
+      usernameInput.placeholder = "Please enter your name!";
+      usernameInput.style.borderColor = "#e74c3c";
+      setTimeout(() => {
+        usernameInput.style.borderColor = "#3498db";
+        usernameInput.placeholder = "Enter your name";
+      }, 2000);
+    }
+  };
+
+  usernameSubmit.addEventListener('click', handleUsernameSubmit);
+  usernameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleUsernameSubmit();
+  });
+  setTimeout(() => usernameInput.focus(), 100);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ---------------------------
+   Book Manager Module
+--------------------------- */
+const BookManager = {
+  MAX_IMAGES: 5,
+  MAX_SIZE_MB: 1,
 
-body {
-  font-family: 'Inter', sans-serif;
-  line-height: 1.6;
-  background: var(--light);
-  color: var(--dark);
-}
+  processImage(file) {
+    return new Promise((resolve, reject) => {
+      if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
+        reject(new Error(`Image exceeds ${this.MAX_SIZE_MB}MB`));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Error reading image'));
+      reader.readAsDataURL(file);
+    });
+  },
 
-/* ---------- Header ---------- */
-.main-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  padding: 1.5rem 5%;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-}
+  async saveListing(formData, existingId = null) {
+    try {
+      const images = [];
+      const files = formData.images ? Array.from(formData.images).slice(0, this.MAX_IMAGES) : [];
 
-.header-content {
-  max-width: 1440px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+      if (files.length === 0 && !existingId) {
+        throw new Error('At least one image is required');
+      }
 
-.logo {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--secondary);
-  text-decoration: none;
-  transition: var(--transition);
-}
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          throw new Error('Only image files are allowed');
+        }
+        images.push(await this.processImage(file));
+      }
 
-.logo:hover {
-  color: var(--primary);
-}
+      const bookData = {
+        owner: currentUser,
+        title: formData.title.trim(),
+        author: formData.author.trim(),
+        price: parseFloat(formData.price),
+        condition: formData.condition,
+        location: formData.location.trim(),
+        phone: formData.phone.replace(/\D/g, '').slice(0, 10),
+        images,
+        timestamp: new Date().toISOString()
+      };
 
-.nav-links {
-  display: flex;
-  gap: 2rem;
-}
+      if (isNaN(bookData.price) || bookData.price <= 0) {
+        throw new Error('Invalid price');
+      }
 
-.nav-link {
-  font-size: 1rem;
-  color: var(--secondary);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.8rem 1.2rem;
-  border-radius: var(--radius-md);
-  transition: var(--transition);
-  position: relative;
-}
+      if (existingId) {
+        await updateDoc(doc(db, "books", existingId), bookData);
+        return existingId;
+      } else {
+        const docRef = await addDoc(collection(db, "books"), bookData);
+        return docRef.id;
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      return null;
+    }
+  },
 
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: var(--primary);
-  transition: var(--transition);
-}
-
-.nav-link:hover {
-  color: var(--primary);
-}
-
-.nav-link:hover::after {
-  width: 100%;
-  left: 0;
-}
-
-/* ---------- Hero Section ---------- */
-.hero-section {
-  padding: 8rem 5% 4rem;
-  text-align: center;
-  background: linear-gradient(135deg, var(--secondary), var(--primary));
-  color: white;
-  margin-top: 100px; /* offset fixed header */
-}
-
-.hero-section .hero-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.hero-section h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.hero-section p {
-  font-size: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.search-bar {
-  padding: 1rem 1.5rem;
-  border: none;
-  border-radius: var(--radius-md);
-  width: 100%;
-  max-width: 500px;
-  font-size: 1rem;
-  outline: none;
-}
-
-/* Additional styling for sell page hero */
-.sell-hero {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-}
-
-/* ---------- Books Section (Buy Page) ---------- */
-.books-section {
-  padding: 4rem 5%;
-  background: var(--light);
-}
-
-.book-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  justify-content: center;
-}
-
-.book-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  transition: var(--transition);
-  width: 300px;
-}
-
-.book-card:hover {
-  transform: translateY(-5px);
-}
-
-.book-images {
-  height: 200px;
-  overflow: hidden;
-}
-
-.book-images img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.book-details {
-  padding: 1rem;
-  text-align: center;
-}
-
-.book-details h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--secondary);
-}
-
-.book-details p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.book-price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--primary);
-}
-
-/* ---------- Sell Form Section (Sell Page) ---------- */
-.sell-form-section {
-  padding: 4rem 5%;
-  background: var(--light);
-}
-
-.sell-form {
-  background: white;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 2rem;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-}
-
-.sell-form .form-title {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  color: var(--secondary);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--secondary);
-}
-
-.form-group input,
-.form-group select {
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  outline: none;
-  transition: var(--transition);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--primary);
-}
-
-/* ---------- Image Upload Section ---------- */
-.upload-section {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.upload-label {
-  display: block;
-  cursor: pointer;
-  border: 2px dashed rgba(0,0,0,0.1);
-  padding: 2rem;
-  border-radius: var(--radius-md);
-  transition: var(--transition);
-  margin-bottom: 1rem;
-}
-
-.upload-label:hover {
-  background: rgba(0,0,0,0.02);
-}
-
-.upload-box i {
-  font-size: 2rem;
-  color: var(--primary);
-  margin-bottom: 1rem;
-}
-
-.upload-box h3 {
-  font-size: 1.5rem;
-  color: var(--secondary);
-  margin-bottom: 0.5rem;
-}
-
-.upload-box p {
-  font-size: 1rem;
-  color: var(--dark);
-}
-
-.browse-btn {
-  margin-top: 1rem;
-  padding: 0.8rem 1.5rem;
-  background: var(--accent);
-  border: none;
-  color: var(--secondary);
-  font-weight: bold;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.browse-btn:hover {
-  background: var(--primary);
-  color: white;
-}
-
-.preview-grid {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.preview-img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-}
-
-/* ---------- Submit Button ---------- */
-.submit-btn {
-  width: 100%;
-  padding: 1rem;
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 1.2rem;
-  color: var(--secondary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.submit-btn:hover {
-  background: var(--primary);
-  color: white;
-}
-
-/* ---------- Responsive Design ---------- */
-@media (max-width: 768px) {
-  .form-grid {
-    grid-template-columns: 1fr;
+  async deleteListing(id) {
+    try {
+      await deleteDoc(doc(db, "books", id));
+    } catch (error) {
+      alert(`Error deleting: ${error.message}`);
+    }
   }
-  .hero-section h1 {
-    font-size: 2.5rem;
+};
+
+/* ---------------------------
+   Sell Page Implementation
+--------------------------- */
+async function initializeSellPage() {
+  const form = document.getElementById('sellForm');
+  if (!form) return;
+
+  // Ensure the file input has id="fileInput" in your HTML
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const urlParams = new URLSearchParams(window.location.search);
+  const editId = urlParams.get('edit');
+
+  // If editing an existing listing, load its data
+  if (editId) {
+    try {
+      const docSnap = await getDoc(doc(db, "books", editId));
+      if (docSnap.exists() && docSnap.data().owner === currentUser) {
+        const book = docSnap.data();
+        form.title.value = book.title;
+        form.author.value = book.author;
+        form.price.value = book.price;
+        form.condition.value = book.condition;
+        form.location.value = book.location;
+        form.phone.value = book.phone;
+        previewContainer.innerHTML = book.images
+          .map(img => `<img src="${img}" class="preview-img" alt="Preview Image">`)
+          .join('');
+      }
+    } catch (error) {
+      console.error('Error loading book:', error);
+    }
   }
-  .hero-section p {
-    font-size: 1rem;
+
+  // Show image previews on file selection
+  fileInput.addEventListener('change', () => {
+    previewContainer.innerHTML = '';
+    const files = Array.from(fileInput.files).slice(0, BookManager.MAX_IMAGES);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement('img');
+        img.className = 'preview-img';
+        img.src = e.target.result;
+        previewContainer.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Form submission to save listing
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    try {
+      const formData = {
+        title: form.title.value,
+        author: form.author.value,
+        price: form.price.value,
+        condition: form.condition.value,
+        location: form.location.value,
+        phone: form.phone.value,
+        images: fileInput.files
+      };
+
+      const bookId = await BookManager.saveListing(formData, editId);
+      if (bookId) {
+        window.location.href = `buy.html?new=${bookId}`;
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+/* ---------------------------
+   Buy Page Implementation
+--------------------------- */
+async function initializeBuyPage() {
+  const bookGrid = document.getElementById('bookGrid');
+  if (!bookGrid) return;
+
+  const searchInput = document.getElementById('searchInput');
+
+  const renderBooks = (books) => {
+    bookGrid.innerHTML = books.map(book => `
+      <div class="book-card" data-id="${book.id}">
+        <div class="book-images">
+          ${book.images.map(img => `<img src="${img}" class="book-image" alt="${book.title}">`).join('')}
+        </div>
+        <div class="book-details">
+          <h3>${book.title}</h3>
+          <p class="book-author">By ${book.author}</p>
+          <span class="book-condition">${book.condition}</span>
+          <div class="book-price">₹${book.price.toFixed(2)}</div>
+          <div class="book-info">
+            <span class="book-location">📍 ${book.location}</span>
+            <span class="book-phone">📞 ${book.phone}</span>
+          </div>
+          ${book.owner === currentUser ? `
+            <div class="owner-controls">
+              <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
+              <button class="remove-btn" onclick="BookManager.deleteListing('${book.id}')">Remove</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  };
+
+  // Real-time listener for books collection
+  const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
+  onSnapshot(q, (snapshot) => {
+    const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderBooks(books);
+    highlightNewBook();
+  });
+
+  // Search functionality for books
+  searchInput.addEventListener('input', async () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    const snapshot = await getDocs(collection(db, "books"));
+    const filtered = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(book => 
+        book.title.toLowerCase().includes(searchTerm) ||
+        book.author.toLowerCase().includes(searchTerm)
+      );
+    renderBooks(filtered);
+  });
+
+  // Highlight a newly added book using URL parameter
+  const highlightNewBook = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const newId = urlParams.get('new');
+    if (newId) {
+      history.replaceState(null, '', 'buy.html');
+      const newBook = bookGrid.querySelector(`[data-id="${newId}"]`);
+      if (newBook) {
+        newBook.scrollIntoView({ behavior: 'smooth' });
+        newBook.style.animation = 'highlight 1.5s ease 2';
+      }
+    }
+  };
+}
+
+/* ---------------------------
+   Initialization on DOM Ready
+--------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('sellForm')) {
+    initializeSellPage();
   }
-}.upload-container {
-  text-align: center;
-}
+  if (document.getElementById('bookGrid')) {
+    initializeBuyPage();
+  }
+});
 
-.upload-label {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.upload-label:hover {
-  background-color: #2980b9;
-}
-
-.upload-label input[type="file"] {
-  display: none; /* Keep this hidden */
-}
+// Expose BookManager globally for inline event handlers
+window.BookManager = BookManager;
