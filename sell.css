@@ -66,24 +66,29 @@ body {
   width: 100%;
 }
 
-/* Hamburger & Mobile Menu */
-/* Hide hamburger by default */
+/* Mobile Menu & Hamburger */
+/* Hide mobile menu by default */
+.mobile-menu {
+  display: none;
+}
 .hamburger {
   display: none !important;
   background: none;
   border: none;
 }
 
-/* Mobile Styles */
+/* Mobile Styles (max-width: 768px) */
 @media screen and (max-width: 768px) {
   .hamburger {
     display: flex !important;
     padding: 10px;
     z-index: 1001;
   }
+  /* Hide desktop navigation on mobile */
   .nav-links {
     display: none;
   }
+  /* Show mobile menu */
   .mobile-menu {
     display: flex;
     flex-direction: column;
@@ -182,13 +187,13 @@ body {
   color: #264653;
   font-weight: 700;
 }
-/* Default to a single column for mobile */
+/* Form grid defaults to one column (mobile) */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
 }
-/* For screens wider than 600px, use two columns */
+/* Use two columns on larger screens (min-width: 600px) */
 @media screen and (min-width: 600px) {
   .form-grid {
     grid-template-columns: 1fr 1fr;
@@ -248,7 +253,7 @@ body {
   color: #2a9d8f;
 }
 .preview-container {
-  display: none; /* will be set to grid by JS when files are chosen */
+  display: none; /* Will be switched to grid via JS when files are chosen */
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
   margin: 1rem 0;
