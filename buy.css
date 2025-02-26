@@ -84,6 +84,24 @@ body {
   box-shadow: 0 0 8px rgba(42, 157, 143, 0.5);
 }
 
+/* Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #f0f4f8;
+  color: #333;
+  line-height: 1.6;
+}
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* Book Grid */
 .book-grid {
   display: grid;
@@ -102,9 +120,8 @@ body {
   }
 }
 
-/* Book Card with Animated Overlay */
+/* Book Card */
 .book-card {
-  position: relative;
   background: #fff;
   border-radius: 15px;
   overflow: hidden;
@@ -112,94 +129,94 @@ body {
   transition: transform 0.3s, box-shadow 0.3s;
 }
 .book-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
-.book-images {
-  position: relative;
-  height: 300px;
-  overflow: hidden;
-}
+
+/* Book Image */
 .book-image {
   width: 100%;
-  height: 100%;
+  height: 250px;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 .book-card:hover .book-image {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
-/* Animated Overlay with Book Info */
-.book-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(38, 169, 143, 0.85), rgba(38, 169, 143, 0.3));
-  color: #fff;
+/* Book Details */
+.book-details {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  opacity: 0;
-  transform: translateY(-100%);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  z-index: 2;
 }
-.book-card:hover .book-overlay {
-  opacity: 1;
-  transform: translateY(0);
-}
-.book-overlay h3 {
-  font-size: 1.6rem;
+.book-details h3 {
+  font-size: 1.5rem;
   margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #264653;
 }
-.book-overlay .book-author {
+.book-author {
   font-size: 1rem;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #555;
+  margin-bottom: 10px;
 }
-.book-overlay .book-price {
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-.book-overlay .book-info {
+.book-condition {
+  display: inline-block;
+  background: #2a9d8f;
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 50px;
   font-size: 0.9rem;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
 }
-/* Owner Controls inside Overlay */
-.book-overlay .owner-controls {
-  margin-top: auto;
+.book-price {
+  font-size: 1.3rem;
+  color: #2a9d8f;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+.book-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+.book-location,
+.book-phone {
+  display: flex;
+  align-items: center;
+}
+.book-location::before,
+.book-phone::before {
+  margin-right: 5px;
+}
+
+/* Owner Controls */
+.owner-controls {
   display: flex;
   gap: 10px;
+  margin-top: 15px;
 }
-.book-overlay .edit-btn,
-.book-overlay .remove-btn {
-  padding: 6px 10px;
+.owner-controls button {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.9rem;
   border: none;
-  border-radius: 5px;
+  border-radius: 50px;
   cursor: pointer;
-  font-size: 0.8rem;
   transition: background 0.3s;
 }
-.book-overlay .edit-btn {
+.edit-btn {
   background: #ffc107;
   color: #333;
 }
-.book-overlay .edit-btn:hover {
+.edit-btn:hover {
   background: #e0a800;
 }
-.book-overlay .remove-btn {
+.remove-btn {
   background: #dc3545;
   color: #fff;
 }
-.book-overlay .remove-btn:hover {
+.remove-btn:hover {
   background: #c82333;
 }
 
