@@ -1,14 +1,14 @@
 // script.js - Corrected Version
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
   orderBy,
   getDoc,
   getDocs,
@@ -147,64 +147,90 @@ const BookManager = {
 --------------------------- */
 async function initializeSellPage() {
   const form = document.getElementById('sellForm');
+  if (!form) {
+    console.error("Sell form not found.");
+    return;
+  }
   const fileInput = document.getElementById('bookCover');
   const previewContainer = document.getElementById('previewContainer');
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
+  // If editing an existing listing, load and display its details
   if (editId) {
     try {
-      const docSnap = await getDoc(doc(db, "books", editId));
-      if (docSnap.exists() && docSnap.data().owner === currentUser) {
+      const docRef = doc(db, "books", editId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
         const book = docSnap.data();
-        form.title.value = book.title;
-        form.author.value = book.author;
-        form.price.value = book.price;
-        form.condition.value = book.condition;
-        form.location.value = book.location;
-        form.phone.value = book.phone;
-        previewContainer.innerHTML = book.images
-          .map(img => `<img src="${img}" class="preview-img" alt="Preview">`)
-          .join('');
+        if (book.owner === currentUser) {
+          // Fill form fields using name attributes
+          form.elements['title'].value = book.title;
+          form.elements['author'].value = book.author;
+          form.elements['price'].value = book.price;
+          form.elements['condition'].value = book.condition;
+          form.elements['location'].value = book.location;
+          form.elements['phone'].value = book.phone;
+          // Display preview images
+          previewContainer.innerHTML = '';
+          if (book.images && Array.isArray(book.images)) {
+            book.images.forEach(img => {
+              const imageElement = document.createElement('img');
+              imageElement.src = img;
+              imageElement.className = 'preview-img';
+              imageElement.alt = "Preview";
+              previewContainer.appendChild(imageElement);
+            });
+          }
+        } else {
+          console.error("Current user is not the owner of this listing.");
+        }
+      } else {
+        console.error("No such document found for editing.");
       }
     } catch (error) {
-      console.error('Error loading book:', error);
+      console.error("Error loading book for editing:", error);
     }
   }
 
-  fileInput.addEventListener('change', () => {
-    previewContainer.innerHTML = '';
-    const files = Array.from(fileInput.files).slice(0, BookManager.MAX_IMAGES);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.className = 'preview-img';
-        img.src = e.target.result;
-        previewContainer.appendChild(img);
-      };
-      reader.readAsDataURL(file);
+  // Update preview images when new files are selected
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      previewContainer.innerHTML = '';
+      const files = Array.from(fileInput.files).slice(0, BookManager.MAX_IMAGES);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.className = 'preview-img';
+          img.src = e.target.result;
+          previewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
     });
-  });
+  }
 
+  // Handle form submission for new or edited listing
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    
     try {
       const formData = {
-        title: form.title.value,
-        author: form.author.value,
-        price: form.price.value,
-        condition: form.condition.value,
-        location: form.location.value,
-        phone: form.phone.value,
+        title: form.elements['title'].value,
+        author: form.elements['author'].value,
+        price: form.elements['price'].value,
+        condition: form.elements['condition'].value,
+        location: form.elements['location'].value,
+        phone: form.elements['phone'].value,
         images: fileInput.files
       };
 
       const bookId = await BookManager.saveListing(formData, editId);
-      if (bookId) window.location.href = `buy.html?new=${bookId}`;
+      if (bookId) {
+        window.location.href = `buy.html?new=${bookId}`;
+      }
     } finally {
       submitBtn.disabled = false;
     }
@@ -228,7 +254,7 @@ async function initializeBuyPage() {
           <h3>${book.title}</h3>
           <p class="book-author">By ${book.author}</p>
           <span class="book-condition">${book.condition}</span>
-          <div class="book-price">₹${book.price.toFixed(2)}</div>
+          <div class="book-price">₹${parseFloat(book.price).toFixed(2)}</div>
           <div class="book-info">
             <span class="book-location">📍 ${book.location}</span>
             <span class="book-phone">📞 ${book.phone}</span>
@@ -256,7 +282,7 @@ async function initializeBuyPage() {
     const snapshot = await getDocs(collection(db, "books"));
     const filtered = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(book => 
+      .filter(book =>
         book.title.toLowerCase().includes(searchTerm) ||
         book.author.toLowerCase().includes(searchTerm)
       );
@@ -281,8 +307,11 @@ async function initializeBuyPage() {
    Initialization
 --------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) initializeSellPage();
-  if (document.getElementById('bookGrid')) initializeBuyPage();
+  if (document.getElementById('sellForm')) {
+    initializeSellPage();
+  }
+  if (document.getElementById('bookGrid')) {
+    initializeBuyPage();
+  }
 });
-
 window.BookManager = BookManager;
