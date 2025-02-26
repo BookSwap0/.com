@@ -1,50 +1,57 @@
-<!-- buy.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy Books | BookSwap</title>
-    <link rel="stylesheet" href="buy.css">
-    <!-- Add these lines -->
-
-  <!-- Only this script -->
-    <script type="module" src="script.js"></script>
-<!-- Then your script -->
-<script src="script.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buy Books | BookSwap</title>
+  <link rel="stylesheet" href="buy.css" />
+  <!-- Google Fonts for modern typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="username-modal" id="usernameModal" style="display: none;">
+  <!-- Username Modal -->
+  <div class="username-modal" id="usernameModal">
     <div class="username-container">
-        <h2>Welcome to BookSwap! 📚</h2>
-        <input type="text" class="username-input" placeholder="Enter your name" id="usernameInput">
-        <button class="username-submit" id="usernameSubmit">
-            <span>Continue</span>
-        </button>
+      <h2>Welcome to BookSwap! 📚</h2>
+      <input type="text" class="username-input" placeholder="Enter your name" id="usernameInput" />
+      <button class="username-submit" id="usernameSubmit">
+        <span>Continue</span>
+      </button>
     </div>
-</div>
-    <header class="main-header">
-        <div class="header-content">
-            <a href="index.html" class="logo">📚 BookSwap</a>
-            <nav class="nav-links">
-               
-                <a href="sell.html" class="nav-link">Sell Books</a>
-                <a href="index.html" class="nav-link active">Home</a>
-            </nav>
-        </div>
-    </header>
+  </div>
 
-    <div class="container">
-      <div class="card">
-        <h2>Buy Used Books!</h2>
-        <p>
-          Discover a treasure trove of gently used books in excellent condition—your perfect alternative to the high cost of new editions.
-        </p>
+  <header class="main-header">
+    <div class="header-content container">
+      <a href="index.html" class="logo">📚 BookSwap</a>
+      <nav class="nav-links">
+        <a href="sell.html" class="nav-link">Sell Books</a>
+        <a href="index.html" class="nav-link">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content container">
+      <h1>Buy Used Books</h1>
+      <p>
+        Discover a treasure trove of gently used books in excellent condition—your perfect alternative to new editions.
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="search-section">
+      <input type="text" class="search-bar" placeholder="🔍 Search books..." id="searchInput" />
+    </div>
+    <div class="book-grid" id="bookGrid">
+      <!-- Book cards will be dynamically inserted here -->
+      <!-- Example static card: -->
+     
       </div>
-        <input type="text" class="search-bar" placeholder="🔍 Search books..." id="searchInput">
-        <div class="book-grid" id="bookGrid"></div>
     </div>
+  </div>
 
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
