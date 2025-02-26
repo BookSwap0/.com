@@ -1,19 +1,22 @@
-// script.js - Fully Corrected Version
+// script.js
+
+// Import Firebase modules (ensure you’re serving via a local web server)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
   orderBy,
   getDoc,
-  getDocs 
+  getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
+// Firebase configuration (verify these for your project)
 const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
@@ -26,51 +29,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// User Session Management
-let currentUser = localStorage.getItem('currentUser');
-const usernameModal = document.getElementById('usernameModal');
-const usernameInput = document.getElementById('usernameInput');
-const usernameSubmit = document.getElementById('usernameSubmit');
+// Set a default current user (no modal)
+const currentUser = "Anonymous";
 
-if (!currentUser && usernameModal) {
-  usernameModal.style.display = 'flex';
-
-  const handleUsernameSubmit = () => {
-    const name = usernameInput.value.trim();
-    if (name) {
-      currentUser = name;
-      localStorage.setItem('currentUser', name);
-      usernameModal.style.display = 'none';
-      location.reload(); // Refresh to apply user context
-    } else {
-      usernameInput.placeholder = "Please enter your name!";
-      usernameInput.style.borderColor = "#e74c3c";
-      setTimeout(() => {
-        usernameInput.style.borderColor = "#3498db";
-        usernameInput.placeholder = "Enter your name";
-      }, 2000);
-    }
-  };
-
-  usernameSubmit.addEventListener('click', handleUsernameSubmit);
-  usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleUsernameSubmit();
-  });
-  setTimeout(() => usernameInput.focus(), 100);
-}
-
-// Book Manager with Image Handling
+// --- BookManager Object ---
 const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 2,
 
-  async processImage(file) {
+  processImage(file) {
     return new Promise((resolve, reject) => {
       if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
         reject(new Error(`Image exceeds ${this.MAX_SIZE_MB}MB`));
         return;
       }
-      
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = () => reject(new Error('Error reading image'));
@@ -78,34 +50,32 @@ const BookManager = {
     });
   },
 
-  async handleImages(files, existingImages = []) {
+  async handleImages(files) {
     try {
-      const newImages = await Promise.all(
+      const images = await Promise.all(
         Array.from(files)
-          .slice(0, this.MAX_IMAGES - existingImages.length)
-          .map(file => this.processImage(file))
+          .slice(0, this.MAX_IMAGES)
+          .map(file =>
+            this.processImage(file).then(src => ({ src, name: file.name }))
+          )
       );
-      return [...existingImages, ...newImages].slice(0, this.MAX_IMAGES);
+      return images;
     } catch (error) {
       throw new Error(error.message);
     }
   },
 
-  async saveListing(formData, existingId = null) {
+  async saveListing(formData, files, existingId = null) {
     try {
-      const fileInput = document.getElementById('bookCover');
-      const files = fileInput.files;
       let images = [];
-
       if (existingId) {
         const docSnap = await getDoc(doc(db, "books", existingId));
         images = docSnap.exists() ? docSnap.data().images : [];
       }
-
       if (files.length > 0 || !existingId) {
-        images = await this.handleImages(files, existingId ? images : []);
+        const processedImages = await this.handleImages(files);
+        images = processedImages.map(imgObj => imgObj.src);
       }
-
       const bookData = {
         owner: currentUser,
         title: formData.title.trim(),
@@ -121,7 +91,7 @@ const BookManager = {
       if (isNaN(bookData.price) || bookData.price <= 0) {
         throw new Error('Please enter a valid price');
       }
-
+      
       if (existingId) {
         await updateDoc(doc(db, "books", existingId), bookData);
         return existingId;
@@ -131,6 +101,7 @@ const BookManager = {
       }
     } catch (error) {
       alert(`Error: ${error.message}`);
+      console.error("saveListing error:", error);
       return null;
     }
   },
@@ -141,11 +112,12 @@ const BookManager = {
       alert('Listing deleted successfully');
     } catch (error) {
       alert(`Deletion failed: ${error.message}`);
+      console.error("deleteListing error:", error);
     }
   }
 };
 
-// Sell Page Implementation
+// --- Sell Page Implementation ---
 async function initializeSellPage() {
   const form = document.getElementById('sellForm');
   const fileInput = document.getElementById('bookCover');
@@ -153,7 +125,6 @@ async function initializeSellPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
-  // Load existing listing for editing
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -165,38 +136,59 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
-        
-        // Display existing images
+        // Create preview items for stored image URLs.
         previewContainer.innerHTML = book.images
-          .map(img => `<img src="${img}" class="preview-img" alt="Book preview">`)
+          .map(src => `
+            <div class="preview-item">
+              <img src="${src}" class="preview-img" alt="Book preview" onerror="this.style.display='none';">
+            </div>
+          `)
           .join('');
+        if (book.images.length > 0) {
+          previewContainer.style.display = 'grid';
+        }
       }
     } catch (error) {
-      console.error('Error loading listing:', error);
+      console.error("Error loading listing:", error);
     }
   }
 
-  // Real-time image preview handler
-  fileInput.addEventListener('change', async () => {
-    try {
-      const files = Array.from(fileInput.files);
-      const images = await BookManager.handleImages(files);
-      
-      previewContainer.innerHTML = images
-        .map(img => `<img src="${img}" class="preview-img" alt="Upload preview">`)
-        .join('');
-    } catch (error) {
-      alert(error.message);
-      fileInput.value = '';
+  // Image preview on file selection
+  fileInput.addEventListener('change', () => {
+    const files = fileInput.files;
+    previewContainer.innerHTML = "";
+    if (!files || files.length === 0) {
+      previewContainer.style.display = 'none';
+      return;
     }
+    Array.from(files).forEach(file => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'preview-item';
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'preview-img';
+          img.alt = file.name;
+          previewItem.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = file.name;
+        previewItem.appendChild(span);
+      }
+      previewContainer.appendChild(previewItem);
+    });
+    previewContainer.style.display = "grid";
   });
 
-  // Form submission handler
+  // Form submission handler.
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-
     try {
       const formData = {
         title: form.title.value,
@@ -206,8 +198,7 @@ async function initializeSellPage() {
         location: form.location.value,
         phone: form.phone.value
       };
-
-      const bookId = await BookManager.saveListing(formData, editId);
+      const bookId = await BookManager.saveListing(formData, fileInput.files, editId);
       if (bookId) {
         window.location.href = `buy.html?new=${bookId}`;
       }
@@ -217,62 +208,55 @@ async function initializeSellPage() {
   });
 }
 
-// Buy Page Implementation
+// --- Buy Page Implementation ---
 async function initializeBuyPage() {
   const bookGrid = document.getElementById('bookGrid');
   const searchInput = document.getElementById('searchInput');
 
-  const createBookCard = (book) => `
-    <div class="book-card" data-id="${book.id}">
-      <div class="book-images">
-        ${book.images.map(img => `
-          <img src="${img}" class="book-image" alt="${book.title} cover">
-        `).join('')}
-      </div>
-      <div class="book-details">
-        <h3>${book.title}</h3>
-        <p class="book-author">By ${book.author}</p>
-        <div class="book-meta">
-          <span class="book-price">₹${book.price.toFixed(2)}</span>
-          <span class="book-condition">${book.condition}</span>
+  const createBookCard = (book) => {
+    return `
+      <div class="book-card" data-id="${book.id}">
+        <div class="book-images">
+          ${book.images.map(src => `<img src="${src}" class="book-image" alt="${book.title} cover">`).join('')}
         </div>
-        <div class="book-location">📍 ${book.location}</div>
-        <div class="book-contact">📞 ${book.phone}</div>
-        ${book.owner === currentUser ? `
-          <div class="owner-controls">
-            <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
-            <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
+        <div class="book-details">
+          <h3>${book.title}</h3>
+          <p class="book-author">By ${book.author}</p>
+          <div class="book-meta">
+            <span class="book-price">₹${book.price.toFixed(2)}</span>
+            <span class="book-condition">${book.condition}</span>
           </div>
-        ` : ''}
+          <div class="book-location">📍 ${book.location}</div>
+          <div class="book-contact">📞 ${book.phone}</div>
+          ${book.owner === currentUser ? `
+            <div class="owner-controls">
+              <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
+              <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
+            </div>` : ""}
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  };
 
-  // Real-time updates listener
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
-    const books = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     bookGrid.innerHTML = books.map(createBookCard).join('');
     highlightNewBook();
   });
 
-  // Search functionality
   searchInput.addEventListener('input', async () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const snapshot = await getDocs(collection(db, "books"));
     const filteredBooks = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(book => 
+      .filter(book =>
         book.title.toLowerCase().includes(searchTerm) ||
         book.author.toLowerCase().includes(searchTerm)
       );
     bookGrid.innerHTML = filteredBooks.map(createBookCard).join('');
   });
 
-  // Highlight new listing animation
   const highlightNewBook = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get('new');
@@ -287,39 +271,36 @@ async function initializeBuyPage() {
   };
 }
 
-// Initialize appropriate page
-document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) initializeSellPage();
-  if (document.getElementById('bookGrid')) initializeBuyPage();
-});
-
-// Global access for inline handlers
-window.BookManager = BookManager;
-// Add to script.js
-document.addEventListener('DOMContentLoaded', () => {
+// --- Mobile Menu Handling ---
+function setupMobileMenu() {
   const hamburger = document.querySelector('.hamburger');
   const mobileMenu = document.querySelector('.mobile-menu');
-  
   if (hamburger) {
     hamburger.addEventListener('click', () => {
       hamburger.classList.toggle('active');
       mobileMenu.classList.toggle('active');
     });
   }
-  
-  // Close menu when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.header-content') && mobileMenu.classList.contains('active')) {
       hamburger.classList.remove('active');
       mobileMenu.classList.remove('active');
     }
   });
-  
-  // Close menu on link click
   document.querySelectorAll('.mobile-nav-link').forEach(link => {
     link.addEventListener('click', () => {
       hamburger.classList.remove('active');
       mobileMenu.classList.remove('active');
     });
   });
+}
+
+// --- Initialize on DOMContentLoaded ---
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('sellForm')) initializeSellPage();
+  if (document.getElementById('bookGrid')) initializeBuyPage();
+  setupMobileMenu();
 });
+
+// Expose BookManager globally for inline HTML calls
+window.BookManager = BookManager;
