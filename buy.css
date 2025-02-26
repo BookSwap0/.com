@@ -24,7 +24,7 @@ body {
 .main-header {
   background: #fff;
   padding: 15px 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -39,10 +39,6 @@ body {
   color: #2a9d8f;
   text-decoration: none;
   font-weight: 700;
-}
-.nav-links {
-  display: flex;
-  gap: 20px;
 }
 .nav-link {
   text-decoration: none;
@@ -86,7 +82,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 1;
 }
 .hero-content {
@@ -128,7 +124,7 @@ body {
 }
 .search-bar:focus {
   border-color: #2a9d8f;
-  box-shadow: 0 0 8px rgba(42,157,143,0.3);
+  box-shadow: 0 0 8px rgba(42, 157, 143, 0.3);
 }
 
 /* Book Grid */
@@ -143,13 +139,13 @@ body {
 .book-card {
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .book-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* Book Images */
