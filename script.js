@@ -16,14 +16,15 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Firebase configuration (verify these for your project)
+// Firebase configuration (updated as per your new config)
 const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
   projectId: "bookswap-bac8b",
-  storageBucket: "bookswap-bac8b.appspot.com",
+  storageBucket: "bookswap-bac8b.firebasestorage.app", // Updated storageBucket
   messagingSenderId: "145814837614",
-  appId: "1:145814837614:web:7d52eb3c29fe659688097f"
+  appId: "1:145814837614:web:7d52eb3c29fe659688097f",
+  measurementId: "G-Q33CEMLPZ5" // New measurementId
 };
 
 const app = initializeApp(firebaseConfig);
@@ -270,7 +271,6 @@ async function initializeBuyPage() {
     }
   };
 }
-
 
 // --- Initialize on DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
