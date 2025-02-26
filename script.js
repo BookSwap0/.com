@@ -1,4 +1,4 @@
-// script.js - Enhanced Version with Improved UI & Responsiveness
+// script.js - Corrected Version
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { 
   getFirestore, 
@@ -9,23 +9,20 @@ import {
   deleteDoc, 
   onSnapshot, 
   query, 
-  orderBy, 
+  orderBy,
   getDoc,
   getDocs 
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
   projectId: "bookswap-bac8b",
-  storageBucket: "bookswap-bac8b.firebasestorage.app",
+  storageBucket: "bookswap-bac8b.appspot.com",
   messagingSenderId: "145814837614",
-  appId: "1:145814837614:web:7d52eb3c29fe659688097f",
-  measurementId: "G-Q33CEMLPZ5"
+  appId: "1:145814837614:web:7d52eb3c29fe659688097f"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -37,7 +34,7 @@ const usernameModal = document.getElementById('usernameModal');
 const usernameInput = document.getElementById('usernameInput');
 const usernameSubmit = document.getElementById('usernameSubmit');
 
-if (!currentUser) {
+if (!currentUser && usernameModal) {
   usernameModal.style.display = 'flex';
 
   const handleUsernameSubmit = () => {
@@ -70,7 +67,7 @@ const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 1,
 
-  processImage(file) {
+  async processImage(file) {
     return new Promise((resolve, reject) => {
       if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
         reject(new Error(`Image exceeds ${this.MAX_SIZE_MB}MB`));
@@ -85,18 +82,25 @@ const BookManager = {
 
   async saveListing(formData, existingId = null) {
     try {
-      const images = [];
       const files = formData.images ? Array.from(formData.images).slice(0, this.MAX_IMAGES) : [];
+      let images = [];
 
-      if (files.length === 0 && !existingId) {
-        throw new Error('At least one image is required');
+      if (existingId) {
+        const docSnap = await getDoc(doc(db, "books", existingId));
+        if (!docSnap.exists()) throw new Error('Document not found');
+        images = docSnap.data().images;
       }
 
-      for (const file of files) {
-        if (!file.type.startsWith('image/')) {
-          throw new Error('Only image files are allowed');
+      if (files.length > 0) {
+        images = [];
+        for (const file of files) {
+          if (!file.type.startsWith('image/')) {
+            throw new Error('Only image files are allowed');
+          }
+          images.push(await this.processImage(file));
         }
-        images.push(await this.processImage(file));
+      } else if (!existingId) {
+        throw new Error('At least one image is required');
       }
 
       const bookData = {
@@ -142,15 +146,11 @@ const BookManager = {
 --------------------------- */
 async function initializeSellPage() {
   const form = document.getElementById('sellForm');
-  if (!form) return;
-
-  // Ensure the file input has id="fileInput" in your HTML
-  const fileInput = document.getElementById('fileInput');
+  const fileInput = document.getElementById('bookCover');
   const previewContainer = document.getElementById('previewContainer');
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
-  // If editing an existing listing, load its data
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -163,7 +163,7 @@ async function initializeSellPage() {
         form.location.value = book.location;
         form.phone.value = book.phone;
         previewContainer.innerHTML = book.images
-          .map(img => `<img src="${img}" class="preview-img" alt="Preview Image">`)
+          .map(img => `<img src="${img}" class="preview-img" alt="Preview">`)
           .join('');
       }
     } catch (error) {
@@ -171,7 +171,6 @@ async function initializeSellPage() {
     }
   }
 
-  // Show image previews on file selection
   fileInput.addEventListener('change', () => {
     previewContainer.innerHTML = '';
     const files = Array.from(fileInput.files).slice(0, BookManager.MAX_IMAGES);
@@ -187,11 +186,11 @@ async function initializeSellPage() {
     });
   });
 
-  // Form submission to save listing
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
+    
     try {
       const formData = {
         title: form.title.value,
@@ -204,11 +203,7 @@ async function initializeSellPage() {
       };
 
       const bookId = await BookManager.saveListing(formData, editId);
-      if (bookId) {
-        window.location.href = `buy.html?new=${bookId}`;
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
+      if (bookId) window.location.href = `buy.html?new=${bookId}`;
     } finally {
       submitBtn.disabled = false;
     }
@@ -220,8 +215,6 @@ async function initializeSellPage() {
 --------------------------- */
 async function initializeBuyPage() {
   const bookGrid = document.getElementById('bookGrid');
-  if (!bookGrid) return;
-
   const searchInput = document.getElementById('searchInput');
 
   const renderBooks = (books) => {
@@ -250,7 +243,6 @@ async function initializeBuyPage() {
     `).join('');
   };
 
-  // Real-time listener for books collection
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
     const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -258,7 +250,6 @@ async function initializeBuyPage() {
     highlightNewBook();
   });
 
-  // Search functionality for books
   searchInput.addEventListener('input', async () => {
     const searchTerm = searchInput.value.toLowerCase();
     const snapshot = await getDocs(collection(db, "books"));
@@ -271,7 +262,6 @@ async function initializeBuyPage() {
     renderBooks(filtered);
   });
 
-  // Highlight a newly added book using URL parameter
   const highlightNewBook = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get('new');
@@ -287,16 +277,11 @@ async function initializeBuyPage() {
 }
 
 /* ---------------------------
-   Initialization on DOM Ready
+   Initialization
 --------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) {
-    initializeSellPage();
-  }
-  if (document.getElementById('bookGrid')) {
-    initializeBuyPage();
-  }
+  if (document.getElementById('sellForm')) initializeSellPage();
+  if (document.getElementById('bookGrid')) initializeBuyPage();
 });
 
-// Expose BookManager globally for inline event handlers
 window.BookManager = BookManager;
