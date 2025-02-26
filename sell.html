@@ -5,32 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sell Books | BookSwap</title>
   <link rel="stylesheet" href="sell.css" />
-  <!-- Google Fonts for modern typography -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-     <script type="module" src="script.js"></script>
 </head>
 <body>
+  <!-- Main Header -->
   <header class="main-header">
     <div class="header-content container">
       <a href="index.html" class="logo">📚 BookSwap</a>
       <nav class="nav-links">
         <a href="buy.html" class="nav-link">Browse Books</a>
         <a href="index.html" class="nav-link">Home</a>
-        <!-- Add to header section -->
-<button class="hamburger" aria-label="Menu">
-  <span class="hamburger-box">
-    <span class="hamburger-inner"></span>
-  </span>
-</button>
-<div class="mobile-menu">
-  <a href="buy.html" class="mobile-nav-link">Browse</a>
-  <a href="index.html" class="mobile-nav-link">Home</a>
-  <a href="sell.html" class="mobile-nav-link">Sell</a>
-</div>
       </nav>
+      <!-- Hamburger button (visible only on mobile) -->
+      <button class="hamburger" aria-label="Menu">
+        <span class="hamburger-box">
+          <span class="hamburger-inner"></span>
+        </span>
+      </button>
     </div>
+    <nav class="mobile-menu">
+      <a href="buy.html" class="mobile-nav-link">Browse</a>
+      <a href="index.html" class="mobile-nav-link">Home</a>
+      <a href="sell.html" class="mobile-nav-link">Sell</a>
+    </nav>
   </header>
-  
+
+  <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="hero-content container">
@@ -38,7 +38,8 @@
       <p>Turn your pre-loved books into cash. List your favorite reads and connect with enthusiastic buyers.</p>
     </div>
   </section>
-  
+
+  <!-- Sell Form Section -->
   <section class="sell-form-section">
     <div class="form-container container">
       <form class="sell-form" id="sellForm">
@@ -76,21 +77,21 @@
           </div>
           <div class="form-group upload-group">
             <div class="upload-box" id="uploadBox">
-              <input type="file" id="bookCover" accept="image/*" hidden>
+              <input type="file" id="bookCover" accept="image/*" multiple hidden>
               <label for="bookCover" class="upload-content">
                 <span class="upload-text">Select Book Cover Image</span>
+                <span class="upload-subtext">(Max 5 images, 2MB each)</span>
               </label>
             </div>
-            <div id="previewContainer" class="preview-container" style="display: none;">
-              <img id="previewImage" class="preview-image" alt="Book Cover Preview">
-            </div>
+            <div id="previewContainer" class="preview-container"></div>
           </div>
         </div>
         <button type="submit" class="submit-btn">Publish Listing</button>
       </form>
     </div>
   </section>
-  
 
+  <!-- Include our main script as a module -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
