@@ -66,54 +66,7 @@ body {
   width: 100%;
 }
 
-/* Mobile Menu & Hamburger */
-/* Hide mobile menu by default */
-.mobile-menu {
-  display: none;
-}
-.hamburger {
-  display: none !important;
-  background: none;
-  border: none;
-}
-
-/* Mobile Styles (max-width: 768px) */
-@media screen and (max-width: 768px) {
-  .hamburger {
-    display: flex !important;
-    padding: 10px;
-    z-index: 1001;
-  }
-  /* Hide desktop navigation on mobile */
-  .nav-links {
-    display: none;
-  }
-  /* Show mobile menu */
-  .mobile-menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: fixed;
-    top: 60px;
-    right: 0;
-    width: 100%;
-    height: calc(100vh - 60px);
-    background: rgba(255,255,255,0.98);
-    padding: 20px;
-    transition: transform 0.3s ease-in-out;
-    transform: translateX(100%);
-    z-index: 999;
-  }
-  .mobile-menu.active {
-    transform: translateX(0);
-  }
-  .mobile-nav-link {
-    padding: 15px;
-    width: 100%;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-  }
-}
+/* Removed Hamburger & Mobile Menu styles */
 
 /* Hero Section */
 .hero-section {
@@ -187,14 +140,13 @@ body {
   color: #264653;
   font-weight: 700;
 }
-/* Form grid defaults to one column (mobile) */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
 }
-/* Use two columns on larger screens (min-width: 600px) */
-@media screen and (min-width: 600px) {
+/* On desktop (screens wider than 600px) use two columns */
+@media (min-width: 600px) {
   .form-grid {
     grid-template-columns: 1fr 1fr;
     gap: 25px;
@@ -253,7 +205,7 @@ body {
   color: #2a9d8f;
 }
 .preview-container {
-  display: none; /* Will be switched to grid via JS when files are chosen */
+  display: none; /* will be set to grid by JS when files are chosen */
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
   margin: 1rem 0;
@@ -291,7 +243,7 @@ body {
 }
 
 /* Mobile Form Optimization */
-@media screen and (max-width: 480px) {
+@media (max-width: 480px) {
   .sell-form {
     padding: 30px 20px;
     border-radius: 15px;
@@ -315,9 +267,9 @@ body {
   }
 }
 
-/* Highlight Animation (for Buy Page) */
+/* Highlight Animation (used in buy page) */
 @keyframes highlightPulse {
-  0% { box-shadow: 0 0 0 0 rgba(42,157,143,0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(42,157,143,0); }
-  100% { box-shadow: 0 0 0 0 rgba(42,157,143,0); }
+  0% { box-shadow: 0 0 0 0 rgba(42,157,143, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(42,157,143, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(42,157,143, 0); }
 }
