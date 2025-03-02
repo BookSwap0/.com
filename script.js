@@ -12,8 +12,7 @@ import {
   onSnapshot,
   query,
   orderBy,
-  getDoc,
-  getDocs
+  getDoc
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 // Firebase configuration (replace with your own config)
@@ -34,7 +33,6 @@ const db = getFirestore(app);
 // This ID will be stored in localStorage and used as the "owner" for listings.
 let currentUser = localStorage.getItem('ownerId');
 if (!currentUser) {
-  // Use crypto.randomUUID if available, otherwise fallback.
   currentUser = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).substr(2, 9);
   localStorage.setItem('ownerId', currentUser);
 }
@@ -80,7 +78,6 @@ const BookManager = {
         const docSnap = await getDoc(doc(db, "books", existingId));
         images = docSnap.exists() ? docSnap.data().images : [];
       }
-      // If there are new files or it's a new listing, process images.
       if (files.length > 0 || !existingId) {
         const processedImages = await this.handleImages(files);
         images = processedImages.map(imgObj => imgObj.src);
@@ -234,6 +231,9 @@ async function initializeBuyPage() {
     return;
   }
 
+  // Store all books locally for faster search filtering.
+  let allBooks = [];
+
   // Helper function to render books
   function renderBooks(books) {
     bookGrid.innerHTML = books.map(createBookCard).join('');
@@ -245,22 +245,20 @@ async function initializeBuyPage() {
   onSnapshot(q, (snapshot) => {
     if (snapshot.empty) {
       bookGrid.innerHTML = "<p>No books available</p>";
+      allBooks = [];
       return;
     }
-    const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderBooks(books);
+    allBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderBooks(allBooks);
   });
 
-  // Search functionality
-  searchInput.addEventListener('input', async () => {
+  // Search functionality using the local allBooks array
+  searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
-    const snapshot = await getDocs(collection(db, "books"));
-    const filteredBooks = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(book =>
-        book.title.toLowerCase().includes(searchTerm) ||
-        book.author.toLowerCase().includes(searchTerm)
-      );
+    const filteredBooks = allBooks.filter(book =>
+      book.title.toLowerCase().includes(searchTerm) ||
+      book.author.toLowerCase().includes(searchTerm)
+    );
     if (filteredBooks.length === 0) {
       bookGrid.innerHTML = "<p>No matching books found</p>";
     } else {
@@ -299,7 +297,6 @@ function createBookCard(book) {
         <div class="book-location">📍 ${book.location}</div>
         <div class="book-contact">📞 ${book.phone}</div>
         ${
-          // Show owner controls only if the listing's owner matches the current user's ID.
           (book.owner === currentUser)
             ? `<div class="owner-controls">
                  <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
