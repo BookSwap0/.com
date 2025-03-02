@@ -1,4 +1,4 @@
-/* ================= Reset & Global Styles ================= */
+/* ================= Reset & Base Styles ================= */
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +6,7 @@
 }
 body {
   font-family: 'Montserrat', sans-serif;
-  background: #f3f6fa;
+  background: #f0f4f8;
   color: #333;
   line-height: 1.6;
 }
@@ -21,9 +21,9 @@ body {
 
 /* ================= Header ================= */
 .main-header {
-  background: #ffffff;
+  background: #fff;
   padding: 1rem 0;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -35,14 +35,14 @@ body {
 }
 .logo {
   font-size: 1.8rem;
-  color: #34495e;
+  color: #2a9d8f;
   font-weight: 700;
   text-decoration: none;
 }
 .nav-link {
   font-size: 1rem;
   font-weight: 600;
-  color: #34495e;
+  color: #333;
   text-decoration: none;
   position: relative;
   transition: color 0.3s ease;
@@ -54,11 +54,11 @@ body {
   bottom: -4px;
   width: 0%;
   height: 2px;
-  background: #e67e22;
+  background: #2a9d8f;
   transition: width 0.3s ease;
 }
 .nav-link:hover {
-  color: #e67e22;
+  color: #2a9d8f;
 }
 .nav-link:hover::after {
   width: 100%;
@@ -67,7 +67,7 @@ body {
 /* ================= Hero Section ================= */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #e67e22, #d35400);
+  background: linear-gradient(135deg, #2a9d8f, #264653);
   min-height: 45vh;
   display: flex;
   align-items: center;
@@ -110,13 +110,13 @@ body {
   border: none;
   border-radius: 50px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   font-size: 1rem;
   outline: none;
   transition: box-shadow 0.3s ease;
 }
 .search-bar:focus {
-  box-shadow: 0 0 0 3px rgba(230,126,34,0.3);
+  box-shadow: 0 0 0 3px rgba(42,157,143,0.3);
 }
 
 /* ================= Book Grid ================= */
@@ -124,7 +124,20 @@ body {
   display: grid;
   gap: 1.5rem;
   margin: 1rem 0 3rem;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  /* Mobile: one column */
+  grid-template-columns: 1fr;
+}
+@media (min-width: 600px) {
+  /* Tablet: two columns */
+  .book-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 992px) {
+  /* Desktop: three columns */
+  .book-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* ================= Book Card ================= */
@@ -133,7 +146,7 @@ body {
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: slideUp 0.6s ease-out;
 }
@@ -146,7 +159,7 @@ body {
 .book-images {
   position: relative;
   width: 100%;
-  height: 380px; /* Maintains a bold, large image display */
+  height: 380px; /* Keep a bold image height */
   overflow: hidden;
 }
 .book-images img {
@@ -160,12 +173,12 @@ body {
 }
 
 /* ------------------ Condition Badge ------------------ */
-/* Using the existing .book-condition element as an overlay badge */
+/* Using the original .book-condition element as an overlay */
 .book-condition {
   position: absolute;
   top: 16px;
   left: 16px;
-  background: rgba(46, 204, 113, 0.95); /* A fresh green accent */
+  background: rgba(231, 76, 60, 0.95); /* Original red tone */
   color: #fff;
   padding: 0.4rem 0.8rem;
   border-radius: 10px;
@@ -184,16 +197,16 @@ body {
 .book-details h3 {
   font-size: 1.3rem;
   margin-bottom: 0.5rem;
-  color: #34495e;
+  color: #2a9d8f;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 .book-card:hover .book-details h3 {
-  color: #e67e22;
+  color: #264653;
 }
 .book-author {
   font-size: 0.9rem;
-  color: #7f8c8d;
+  color: #555;
   margin-bottom: 0.6rem;
 }
 .book-meta {
@@ -204,13 +217,13 @@ body {
 }
 .book-price {
   font-weight: 700;
-  color: #e67e22;
+  color: #2a9d8f;
   font-size: 1.1rem;
 }
 .book-location,
 .book-contact {
   font-size: 0.9rem;
-  color: #95a5a6;
+  color: #777;
   margin-bottom: 0.4rem;
 }
 
@@ -245,7 +258,7 @@ body {
 
 /* ================= Footer ================= */
 .footer {
-  background: #34495e;
+  background: #264653;
   color: #fff;
   text-align: center;
   padding: 1rem;
@@ -293,8 +306,9 @@ body {
   .book-details h3 {
     font-size: 1.1rem;
   }
+  /* Force one column on very small devices if needed */
   .book-grid {
+    grid-template-columns: 1fr;
     gap: 1rem;
-    grid-template-columns: repeat(3, 1fr);
   }
 }
