@@ -1,9 +1,12 @@
-/* ================= Reset & Base Styles ================= */
+/* buy.css - Enhanced Version */
+
+/* Reset & Base Styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   font-family: 'Montserrat', sans-serif;
   background: #f0f4f8;
@@ -11,14 +14,14 @@ body {
   line-height: 1.6;
 }
 
-/* ================= Container ================= */
+/* Container */
 .container {
   width: 90%;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* ================= Header ================= */
+/* Header - No changes, kept for context */
 .main-header {
   background: #fff;
   padding: 15px 0;
@@ -27,17 +30,20 @@ body {
   top: 0;
   z-index: 1000;
 }
+
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .logo {
   font-size: 1.8rem;
   color: #2a9d8f;
   text-decoration: none;
   font-weight: 700;
 }
+
 .nav-link {
   text-decoration: none;
   color: #333;
@@ -45,6 +51,7 @@ body {
   position: relative;
   transition: color 0.3s ease;
 }
+
 .nav-link::after {
   content: "";
   position: absolute;
@@ -55,225 +62,200 @@ body {
   background: #2a9d8f;
   transition: width 0.3s ease;
 }
+
 .nav-link:hover {
   color: #2a9d8f;
 }
+
 .nav-link:hover::after {
   width: 100%;
 }
 
-/* ================= Hero Section ================= */
-.hero-section {
-  position: relative;
-  background: linear-gradient(135deg, #2a9d8f, #264653);
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #fff;
-  padding: 40px 20px;
-}
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 1;
-}
-.hero-content {
-  position: relative;
-  z-index: 2;
-  animation: fadeInDown 1s ease-out;
-}
-.hero-content h1 {
-  font-size: 2.8rem;
-  margin-bottom: 20px;
-}
-.hero-content p {
-  font-size: 1.2rem;
-  animation: fadeInUp 1s ease-out;
-}
-
-/* ================= Search Section ================= */
-.search-section {
-  margin: 40px 0 20px;
-  text-align: center;
-}
-.search-bar {
-  width: 100%;
-  max-width: 500px;
-  padding: 12px 20px;
-  border: 2px solid #ddd;
-  border-radius: 50px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.search-bar:focus {
-  border-color: #2a9d8f;
-  box-shadow: 0 0 8px rgba(42,157,143,0.3);
-}
-
-/* ================= Book Grid ================= */
+/* Enhanced Book Grid */
 .book-grid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
   margin-bottom: 40px;
-  /* Mobile: one column */
-  grid-template-columns: 1fr;
 }
-@media (min-width: 600px) {
-  /* Tablets: two columns */
+
+@media (min-width: 1024px) {
   .book-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (min-width: 992px) {
-  /* Desktop: three columns */
-  .book-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-/* ================= Book Card ================= */
+@media (max-width: 768px) {
+  .book-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+}
+
+/* Enhanced Book Card */
 .book-card {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: slideUp 0.6s ease-out;
-}
-.book-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
 }
 
-/* ------------------ Book Images ------------------ */
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Book Images with Hover Effect */
 .book-images {
   position: relative;
-  width: 100%;
-  height: 380px; /* Keeps a prominent image size */
+  height: 280px;
   overflow: hidden;
 }
+
 .book-images img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
 }
+
 .book-card:hover .book-images img {
   transform: scale(1.05);
 }
 
-/* ------------------ Condition Badge ------------------ */
+/* Condition Badge with Animation */
 .book-condition {
-  font-size: 0.9rem;
-  background: #e0f7fa; /* Original light blue tone */
-  color: #00796b;
-  padding: 3px 8px;
-  border-radius: 12px;
   position: absolute;
-  top: 16px;
-  left: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  animation: popIn 0.5s ease-out;
+  top: 15px;
+  left: 15px;
+  background: rgba(224, 247, 250, 0.95);
+  color: #00796b;
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2;
 }
 
-/* ------------------ Book Details ------------------ */
-.book-details {
-  padding: 15px 20px;
+.book-card:hover .book-condition {
+  transform: translateY(0);
+  opacity: 1;
 }
+
+/* Book Details Section */
+.book-details {
+  padding: 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .book-details h3 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin-bottom: 8px;
   color: #264653;
+  line-height: 1.3;
 }
+
 .book-author {
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 12px;
 }
+
 .book-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-top: auto;
+  padding-top: 12px;
 }
+
 .book-price {
   font-weight: 700;
   color: #2a9d8f;
+  font-size: 1.2rem;
 }
+
+/* Location and Contact Info */
 .book-location,
 .book-contact {
   font-size: 0.9rem;
-  color: #777;
-  margin-bottom: 5px;
+  color: #666;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* ================= Owner Controls ================= */
+/* Owner Controls Animation */
 .owner-controls {
-  margin-top: 10px;
+  margin-top: 15px;
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
 }
+
 .owner-controls button {
   border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 6px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  flex: 1;
 }
+
 .edit-btn {
   background: #ffc107;
   color: #fff;
 }
+
 .edit-btn:hover {
   background: #e0a800;
+  transform: translateY(-2px);
 }
+
 .delete-btn {
   background: #e74c3c;
   color: #fff;
 }
+
 .delete-btn:hover {
   background: #c0392b;
+  transform: translateY(-2px);
 }
 
-/* ================= Responsive Adjustments ================= */
+/* Responsive Adjustments */
 @media (max-width: 480px) {
-  .hero-content h1 {
-    font-size: 2.2rem;
+  .book-grid {
+    grid-template-columns: 1fr;
   }
-  .hero-content p {
-    font-size: 1rem;
+  
+  .book-images {
+    height: 220px;
   }
+  
   .book-details h3 {
     font-size: 1.3rem;
   }
-  .book-grid {
-    gap: 15px;
+}
+
+/* Loading Animation for Images (Add skeleton class to image container) */
+.book-images.skeleton {
+  background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+  background-size: 200% 100%;
+  animation: 1.5s shine linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position-x: -200%;
   }
-}
-  
-/* ================= Animations ================= */
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes popIn {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
 }
