@@ -35,14 +35,14 @@ body {
 }
 .logo {
   font-size: 1.8rem;
-  color: #2a9d8f;
+  color: #2c3e50;
   font-weight: 700;
   text-decoration: none;
 }
 .nav-link {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #2c3e50;
   text-decoration: none;
   position: relative;
   transition: color 0.3s ease;
@@ -54,20 +54,20 @@ body {
   bottom: -4px;
   width: 0%;
   height: 2px;
-  background: #2a9d8f;
+  background: #1e90ff;
   transition: width 0.3s ease;
 }
 .nav-link:hover {
-  color: #2a9d8f;
+  color: #1e90ff;
 }
 .nav-link:hover::after {
   width: 100%;
 }
 
-/* ================= Hero Section (Original Colors) ================= */
+/* ================= Hero Section (Blue Gradient) ================= */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #2a9d8f, #264653);
+  background: linear-gradient(135deg, #1e90ff, #4169e1);
   min-height: 45vh;
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@ body {
   transition: box-shadow 0.3s ease;
 }
 .search-bar:focus {
-  box-shadow: 0 0 0 3px rgba(42,157,143,0.3);
+  box-shadow: 0 0 0 3px rgba(30,144,255,0.3);
 }
 
 /* ================= Book Grid ================= */
@@ -124,17 +124,14 @@ body {
   display: grid;
   gap: 1.5rem;
   margin: 1rem 0 3rem;
-  /* On mobile, use one column for clarity */
   grid-template-columns: 1fr;
 }
 @media (min-width: 600px) {
-  /* Tablets: two columns */
   .book-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 @media (min-width: 992px) {
-  /* Desktop: three columns */
   .book-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -177,7 +174,7 @@ body {
   position: absolute;
   top: 16px;
   left: 16px;
-  background: rgba(231,76,60,0.95); /* original red tone */
+  background: rgba(30,144,255,0.95); /* Blue accent */
   color: #fff;
   padding: 0.4rem 0.8rem;
   border-radius: 10px;
@@ -196,12 +193,12 @@ body {
 .book-details h3 {
   font-size: 1.3rem;
   margin-bottom: 0.5rem;
-  color: #2a9d8f;
+  color: #1e90ff;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 .book-card:hover .book-details h3 {
-  color: #264653;
+  color: #4169e1;
 }
 .book-author {
   font-size: 0.9rem;
@@ -216,7 +213,7 @@ body {
 }
 .book-price {
   font-weight: 700;
-  color: #2a9d8f;
+  color: #1e90ff;
   font-size: 1.1rem;
 }
 .book-location,
@@ -301,7 +298,7 @@ body {
   .book-details h3 {
     font-size: 1.1rem;
   }
-  /* For very small screens, force a single column */
+  /* For very small screens, force one column for better readability */
   .book-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
