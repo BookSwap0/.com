@@ -15,13 +15,14 @@ import {
   getDoc,
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 // Firebase configuration (updated as per your new config)
 const firebaseConfig = {
   apiKey: "AIzaSyCBg6RQXIiC2BKE2HjzochEeiajc7fBnZA",
   authDomain: "bookswap-bac8b.firebaseapp.com",
   projectId: "bookswap-bac8b",
-  storageBucket: "bookswap-bac8b.firebasestorage.app", // Verify this value in your Firebase console
+  storageBucket: "bookswap-bac8b.firebasestorage.app",
   messagingSenderId: "145814837614",
   appId: "1:145814837614:web:7d52eb3c29fe659688097f",
   measurementId: "G-Q33CEMLPZ5"
@@ -29,9 +30,41 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Set a default current user (no modal)
-const currentUser = "Anonymous";
+// Global variable for the authenticated user's UID
+let currentUser = null;
+
+// Re-render buy page if auth state changes (to update owner controls)
+function renderBuyPage() {
+  if (document.getElementById('bookGrid')) {
+    // Clear and reinitialize the buy page
+    initializeBuyPage();
+  }
+}
+
+// Listen for auth state changes and initialize pages accordingly
+document.addEventListener('DOMContentLoaded', () => {
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user ? user.uid : null;
+    console.log("Current user:", currentUser);
+
+    // If on sell page, ensure the user is logged in.
+    if (document.getElementById('sellForm')) {
+      if (!currentUser) {
+        alert("Please log in to sell a book.");
+        window.location.href = "login.html"; // Adjust the login page URL as needed.
+        return;
+      }
+      initializeSellPage();
+    }
+
+    // Always initialize the buy page so that controls are rendered based on the current auth state.
+    if (document.getElementById('bookGrid')) {
+      initializeBuyPage();
+    }
+  });
+});
 
 // --- BookManager Object ---
 const BookManager = {
@@ -67,6 +100,11 @@ const BookManager = {
   },
 
   async saveListing(formData, files, existingId = null) {
+    if (!currentUser) {
+      alert("You must be logged in to post or edit a listing.");
+      return null;
+    }
+
     try {
       let images = [];
       if (existingId) {
@@ -78,7 +116,7 @@ const BookManager = {
         images = processedImages.map(imgObj => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,
+        owner: currentUser,  // Save the authenticated user's UID
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
@@ -109,8 +147,10 @@ const BookManager = {
 
   async deleteListing(id) {
     try {
-      await deleteDoc(doc(db, "books", id));
-      alert('Listing deleted successfully');
+      if (confirm("Are you sure you want to delete this listing?")) {
+        await deleteDoc(doc(db, "books", id));
+        alert('Listing deleted successfully');
+      }
     } catch (error) {
       alert(`Deletion failed: ${error.message}`);
       console.error("deleteListing error:", error);
@@ -126,6 +166,7 @@ async function initializeSellPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
+  // If editing, load the existing listing (only if owned by the current user)
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -137,7 +178,7 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
-        // Create preview items for stored image URLs.
+        // Display stored images
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -148,6 +189,10 @@ async function initializeSellPage() {
         if (book.images.length > 0) {
           previewContainer.style.display = 'grid';
         }
+      } else {
+        alert("You are not authorized to edit this listing.");
+        window.location.href = "buy.html";
+        return;
       }
     } catch (error) {
       console.error("Error loading listing:", error);
@@ -219,17 +264,21 @@ async function initializeBuyPage() {
     return;
   }
 
-  // Query Firestore for books ordered by timestamp descending
+  // Helper function to render books with the latest auth state
+  function renderBooks(books) {
+    bookGrid.innerHTML = books.map(createBookCard).join('');
+    highlightNewBook();
+  }
+
+  // Listen for Firestore updates
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
     if (snapshot.empty) {
-      console.log("No books found in Firestore.");
       bookGrid.innerHTML = "<p>No books available</p>";
       return;
     }
     const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    bookGrid.innerHTML = books.map(createBookCard).join('');
-    highlightNewBook();
+    renderBooks(books);
   });
 
   // Search functionality
@@ -245,7 +294,7 @@ async function initializeBuyPage() {
     if (filteredBooks.length === 0) {
       bookGrid.innerHTML = "<p>No matching books found</p>";
     } else {
-      bookGrid.innerHTML = filteredBooks.map(createBookCard).join('');
+      renderBooks(filteredBooks);
     }
   });
 
@@ -279,23 +328,39 @@ function createBookCard(book) {
         </div>
         <div class="book-location">📍 ${book.location}</div>
         <div class="book-contact">📞 ${book.phone}</div>
-        ${book.owner === currentUser ? `
-          <div class="owner-controls">
-            <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
-            <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
-          </div>
-        ` : ""}
+        ${
+          // Only show controls if the current user is the owner.
+          (currentUser && book.owner === currentUser)
+            ? `<div class="owner-controls">
+                 <button class="edit-btn" onclick="location.href='sell.html?edit=${book.id}'">Edit</button>
+                 <button class="delete-btn" onclick="BookManager.deleteListing('${book.id}')">Delete</button>
+               </div>`
+            : ""
+        }
       </div>
     </div>
   `;
 }
 
-// --- Initialize on DOMContentLoaded ---
-document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) initializeSellPage();
-  if (document.getElementById('bookGrid')) initializeBuyPage();
-  // Remove or define setupMobileMenu() if needed.
-});
-
 // Expose BookManager globally for inline HTML calls
 window.BookManager = BookManager;
+
+/*
+IMPORTANT: Firestore Security Rules
+
+Remember, client-side checks can be bypassed. You must enforce security on the server.
+In your Firebase console, set Firestore rules similar to the following:
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /books/{bookId} {
+      // Anyone can read listings
+      allow read: if true;
+      // Only allow the authenticated owner to create, update, or delete a listing.
+      // This ensures that even if someone manipulates the client-side UI,
+      // unauthorized write operations are rejected.
+      allow write: if request.auth != null && request.auth.uid == resource.data.owner;
+    }
+  }
+}
+*/
