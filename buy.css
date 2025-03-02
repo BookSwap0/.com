@@ -1,4 +1,4 @@
-/* Base Reset & Global Styles (unchanged) */
+/* Base Reset & Global Styles */
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +6,7 @@
 }
 body {
   font-family: 'Montserrat', sans-serif;
-  background: #eef2f9;
+  background: #f7f9fc;
   color: #333;
   line-height: 1.6;
 }
@@ -21,13 +21,12 @@ body {
 
 /* Header */
 .main-header {
-  background: rgba(255, 255, 255, 0.95);
+  background: #ffffff;
   padding: 1rem 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
-  backdrop-filter: blur(10px);
 }
 .header-content {
   display: flex;
@@ -36,14 +35,14 @@ body {
 }
 .logo {
   font-size: 1.8rem;
-  color: #2a9d8f;
+  color: #1d3557;
   font-weight: 700;
   text-decoration: none;
 }
 .nav-link {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #1d3557;
   text-decoration: none;
   position: relative;
   transition: color 0.3s ease;
@@ -55,11 +54,11 @@ body {
   bottom: -4px;
   width: 0;
   height: 2px;
-  background: #2a9d8f;
+  background: #1d3557;
   transition: width 0.3s ease;
 }
 .nav-link:hover {
-  color: #2a9d8f;
+  color: #457b9d;
 }
 .nav-link:hover::after {
   width: 100%;
@@ -68,13 +67,13 @@ body {
 /* Hero Section */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #2a9d8f, #264653);
-  min-height: 40vh;
+  background: linear-gradient(135deg, #457b9d, #1d3557);
+  min-height: 45vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 1.5rem 1rem;
+  padding: 2rem 1rem;
 }
 .hero-overlay {
   position: absolute;
@@ -91,12 +90,12 @@ body {
   animation: fadeIn 1s ease-out;
 }
 .hero-content h1 {
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   margin-bottom: 0.5rem;
   font-weight: 700;
 }
 .hero-content p {
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 /* Search Section */
@@ -107,52 +106,47 @@ body {
 .search-bar {
   width: 100%;
   max-width: 500px;
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1rem;
   border: none;
   border-radius: 50px;
-  background: #fff;
+  background: #ffffff;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  font-size: 0.9rem;
+  font-size: 1rem;
   outline: none;
   transition: box-shadow 0.3s ease;
 }
 .search-bar:focus {
-  box-shadow: 0 0 0 3px rgba(42,157,143,0.3);
+  box-shadow: 0 0 0 3px rgba(69,123,157,0.3);
 }
 
 /* Book Grid */
 .book-grid {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 1.5rem;
-  margin: 1rem 0 2rem;
-}
-@media (min-width: 768px) {
-  .book-grid {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
+  margin: 1rem 0 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-/* Book Card (Smaller Version) */
+/* Book Card */
 .book-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: slideUp 0.6s ease-out;
 }
 .book-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
-/* Book Image Container - Reduced Height */
+/* Book Image with Fixed Aspect Ratio */
 .book-images {
   position: relative;
   width: 100%;
-  height: 180px;
+  aspect-ratio: 3 / 4;  /* Adjusts height based on width */
   overflow: hidden;
 }
 .book-images img {
@@ -165,14 +159,14 @@ body {
   transform: scale(1.05);
 }
 
-/* Condition Badge (Uses existing .book-condition element) */
+/* Condition Badge using existing .book-condition */
 .book-condition {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(232, 105, 69, 0.9);
+  top: 12px;
+  left: 12px;
+  background: rgba(231, 111, 81, 0.95);
   color: #fff;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -182,18 +176,18 @@ body {
   z-index: 2;
 }
 
-/* Book Details - Compact Version */
+/* Book Details */
 .book-details {
   padding: 0.75rem 1rem;
 }
 .book-details h3 {
   font-size: 1.2rem;
   margin-bottom: 0.4rem;
-  color: #264653;
+  color: #1d3557;
   font-weight: 600;
 }
 .book-author {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #555;
   margin-bottom: 0.5rem;
 }
@@ -205,17 +199,17 @@ body {
 }
 .book-price {
   font-weight: 700;
-  color: #2a9d8f;
+  color: #457b9d;
   font-size: 1rem;
 }
 .book-location,
 .book-contact {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #777;
   margin-bottom: 0.4rem;
 }
 
-/* Owner Controls - Compact */
+/* Owner Controls */
 .owner-controls {
   display: flex;
   justify-content: space-between;
@@ -224,7 +218,7 @@ body {
 .owner-controls button {
   border: none;
   border-radius: 6px;
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
   cursor: pointer;
   transition: background 0.3s;
@@ -242,6 +236,15 @@ body {
 }
 .delete-btn:hover {
   background: #d65a3d;
+}
+
+/* Footer */
+.footer {
+  background: #1d3557;
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
 }
 
 /* Animations */
@@ -277,13 +280,13 @@ body {
 /* Responsive Adjustments */
 @media (max-width: 480px) {
   .hero-content h1 {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
   }
   .hero-content p {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
   .book-images {
-    height: 160px;
+    aspect-ratio: 3 / 4;
   }
   .book-details h3 {
     font-size: 1rem;
