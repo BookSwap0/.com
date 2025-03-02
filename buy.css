@@ -171,6 +171,9 @@ body {
   opacity: 0;
   transform: translateY(20px);
   animation: cardFadeIn 0.5s forwards;
+  display: flex;
+  flex-direction: column;
+  min-height: 450px; /* adjusted card height for a consistent look */
 }
 .book-card:hover {
   transform: translateY(-5px);
@@ -219,9 +222,11 @@ body {
 .book-details {
   padding: 10px 15px;
   background: #fff;
+  /* Allows the details section to take available space */
+  flex-grow: 1;
 }
 .book-details h3 {
-  font-size: 1.3rem;
+  font-size: 1.1rem; /* reduced from 1.3rem for a more subtle title */
   margin-bottom: 6px;
   color: #264653;
 }
@@ -279,7 +284,7 @@ body {
     font-size: 1rem;
   }
   .book-details h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   .book-grid {
     gap: 15px;
