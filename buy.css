@@ -173,7 +173,7 @@ body {
   animation: cardFadeIn 0.5s forwards;
   display: flex;
   flex-direction: column;
-  min-height: 450px; /* adjusted card height for a consistent look */
+  min-height: 400px; /* Reduced card height for a more compact look */
 }
 .book-card:hover {
   transform: translateY(-5px);
@@ -190,7 +190,7 @@ body {
 .book-images {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4; /* Adjust the ratio as needed */
+  aspect-ratio: 3 / 4; /* Maintains proper image ratio */
   overflow: hidden;
 }
 .book-images img {
@@ -222,11 +222,10 @@ body {
 .book-details {
   padding: 10px 15px;
   background: #fff;
-  /* Allows the details section to take available space */
   flex-grow: 1;
 }
 .book-details h3 {
-  font-size: 1.1rem; /* reduced from 1.3rem for a more subtle title */
+  font-size: 1rem; /* Reduced font size for book title */
   margin-bottom: 6px;
   color: #264653;
 }
@@ -284,9 +283,12 @@ body {
     font-size: 1rem;
   }
   .book-details h3 {
-    font-size: 1rem;
+    font-size: 0.9rem; /* Further reduce title font size on mobile */
   }
   .book-grid {
     gap: 15px;
+  }
+  .book-card {
+    min-height: 350px; /* Additional reduction for mobile cards */
   }
 }
