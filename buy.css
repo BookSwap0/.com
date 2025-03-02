@@ -16,14 +16,13 @@ body {
   width: 90%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 0;
 }
 
 /* ================= Header ================= */
 .main-header {
   background: #fff;
-  padding: 1rem 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 15px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -35,45 +34,45 @@ body {
 }
 .logo {
   font-size: 1.8rem;
-  color: #2c3e50;
-  font-weight: 700;
+  color: #2a9d8f;
   text-decoration: none;
+  font-weight: 700;
 }
 .nav-link {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
   text-decoration: none;
+  color: #333;
+  font-weight: 600;
   position: relative;
   transition: color 0.3s ease;
 }
 .nav-link::after {
   content: "";
   position: absolute;
-  left: 0;
   bottom: -4px;
+  left: 0;
   width: 0%;
   height: 2px;
-  background: #1e90ff;
+  background: #2a9d8f;
   transition: width 0.3s ease;
 }
 .nav-link:hover {
-  color: #1e90ff;
+  color: #2a9d8f;
 }
 .nav-link:hover::after {
   width: 100%;
 }
 
-/* ================= Hero Section (Blue Gradient) ================= */
+/* ================= Hero Section ================= */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #1e90ff, #4169e1);
-  min-height: 45vh;
+  background: linear-gradient(135deg, #2a9d8f, #264653);
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 2rem 1rem;
+  color: #fff;
+  padding: 40px 20px;
 }
 .hero-overlay {
   position: absolute;
@@ -81,57 +80,59 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
 }
 .hero-content {
   position: relative;
   z-index: 2;
-  color: #fff;
-  animation: fadeIn 1s ease-out;
+  animation: fadeInDown 1s ease-out;
 }
 .hero-content h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  margin-bottom: 20px;
 }
 .hero-content p {
-  font-size: 1rem;
+  font-size: 1.2rem;
+  animation: fadeInUp 1s ease-out;
 }
 
 /* ================= Search Section ================= */
 .search-section {
-  padding: 1.5rem 0;
+  margin: 40px 0 20px;
   text-align: center;
 }
 .search-bar {
   width: 100%;
   max-width: 500px;
-  padding: 0.9rem 1rem;
-  border: none;
+  padding: 12px 20px;
+  border: 2px solid #ddd;
   border-radius: 50px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   font-size: 1rem;
   outline: none;
-  transition: box-shadow 0.3s ease;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 .search-bar:focus {
-  box-shadow: 0 0 0 3px rgba(30,144,255,0.3);
+  border-color: #2a9d8f;
+  box-shadow: 0 0 8px rgba(42,157,143,0.3);
 }
 
 /* ================= Book Grid ================= */
 .book-grid {
   display: grid;
-  gap: 1.5rem;
-  margin: 1rem 0 3rem;
+  gap: 20px;
+  margin-bottom: 40px;
+  /* Mobile: one column */
   grid-template-columns: 1fr;
 }
 @media (min-width: 600px) {
+  /* Tablets: two columns */
   .book-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 @media (min-width: 992px) {
+  /* Desktop: three columns */
   .book-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -140,23 +141,22 @@ body {
 /* ================= Book Card ================= */
 .book-card {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: slideUp 0.6s ease-out;
 }
 .book-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* ------------------ Book Image ------------------ */
+/* ------------------ Book Images ------------------ */
 .book-images {
   position: relative;
   width: 100%;
-  height: 380px;
+  height: 380px; /* Keeps a prominent image size */
   overflow: hidden;
 }
 .book-images img {
@@ -171,16 +171,14 @@ body {
 
 /* ------------------ Condition Badge ------------------ */
 .book-condition {
+  font-size: 0.9rem;
+  background: #e0f7fa; /* Original light blue tone */
+  color: #00796b;
+  padding: 3px 8px;
+  border-radius: 12px;
   position: absolute;
   top: 16px;
   left: 16px;
-  background: rgba(30,144,255,0.95); /* Blue accent */
-  color: #fff;
-  padding: 0.4rem 0.8rem;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
   animation: popIn 0.5s ease-out;
   z-index: 2;
@@ -188,61 +186,55 @@ body {
 
 /* ------------------ Book Details ------------------ */
 .book-details {
-  padding: 1rem 1.25rem;
+  padding: 15px 20px;
 }
 .book-details h3 {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
-  color: #1e90ff;
-  font-weight: 600;
-  transition: color 0.3s ease;
-}
-.book-card:hover .book-details h3 {
-  color: #4169e1;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #264653;
 }
 .book-author {
   font-size: 0.9rem;
   color: #555;
-  margin-bottom: 0.6rem;
+  margin-bottom: 10px;
 }
 .book-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.6rem;
+  margin-bottom: 10px;
 }
 .book-price {
   font-weight: 700;
-  color: #1e90ff;
-  font-size: 1.1rem;
+  color: #2a9d8f;
 }
 .book-location,
 .book-contact {
   font-size: 0.9rem;
   color: #777;
-  margin-bottom: 0.4rem;
+  margin-bottom: 5px;
 }
 
-/* ------------------ Owner Controls ------------------ */
+/* ================= Owner Controls ================= */
 .owner-controls {
+  margin-top: 10px;
   display: flex;
   justify-content: space-between;
-  margin-top: 0.5rem;
 }
 .owner-controls button {
   border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
+  padding: 8px 12px;
+  border-radius: 5px;
   font-size: 0.9rem;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 .edit-btn {
-  background: #f1c40f;
+  background: #ffc107;
   color: #fff;
 }
 .edit-btn:hover {
-  background: #f39c12;
+  background: #e0a800;
 }
 .delete-btn {
   background: #e74c3c;
@@ -252,55 +244,36 @@ body {
   background: #c0392b;
 }
 
-/* ================= Footer ================= */
-.footer {
-  background: #264653;
-  color: #fff;
-  text-align: center;
-  padding: 1rem;
-  font-size: 0.9rem;
-}
-
-/* ================= Animations ================= */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes popIn {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 /* ================= Responsive Adjustments ================= */
 @media (max-width: 480px) {
   .hero-content h1 {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
   }
   .hero-content p {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
   .book-details h3 {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
   }
-  /* For very small screens, force one column for better readability */
   .book-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 15px;
   }
+}
+  
+/* ================= Animations ================= */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
