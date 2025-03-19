@@ -1,6 +1,4 @@
-// script.js
-
-// Import Firebase modules (ensure you’re serving via a local web server)
+// Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import {
   getFirestore,
@@ -30,7 +28,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Generate a unique identifier for the user if not already set.
-// This ID will be stored in localStorage and used as the "owner" for listings.
 let currentUser = localStorage.getItem('ownerId');
 if (!currentUser) {
   currentUser = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).substr(2, 9);
@@ -225,6 +222,7 @@ async function initializeSellPage() {
 async function initializeBuyPage() {
   const bookGrid = document.getElementById('bookGrid');
   const searchInput = document.getElementById('searchInput');
+  const nearMeBtn = document.getElementById('nearMeBtn');
 
   if (!bookGrid) {
     console.error("Element with ID 'bookGrid' not found.");
@@ -265,6 +263,55 @@ async function initializeBuyPage() {
       renderBooks(filteredBooks);
     }
   });
+
+  // Helper: Reverse geocode to get city name from coordinates using Nominatim API
+  async function getCityFromCoordinates(lat, lon) {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+      const data = await response.json();
+      // Try to use city, town, or village name
+      return data.address.city || data.address.town || data.address.village || "";
+    } catch (e) {
+      console.error("Reverse geocoding failed", e);
+      return "";
+    }
+  }
+
+  // Helper: Sort books so that those near the specified city come first
+  function sortBooksByProximity(city) {
+    if (!city) return;
+    allBooks.sort((a, b) => {
+      const aMatch = a.location.toLowerCase().includes(city.toLowerCase());
+      const bMatch = b.location.toLowerCase().includes(city.toLowerCase());
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+    renderBooks(allBooks);
+  }
+
+  // Near Me button functionality
+  if (nearMeBtn) {
+    nearMeBtn.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const city = await getCityFromCoordinates(lat, lon);
+          if (city) {
+            sortBooksByProximity(city);
+            alert(`Showing books near ${city}`);
+          } else {
+            alert("Could not determine your city from location.");
+          }
+        }, (error) => {
+          alert("Geolocation error: " + error.message);
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    });
+  }
 
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -309,7 +356,6 @@ function createBookCard(book) {
   `;
 }
 
-// Initialize pages on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('sellForm')) initializeSellPage();
   if (document.getElementById('bookGrid')) initializeBuyPage();
