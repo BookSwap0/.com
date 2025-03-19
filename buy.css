@@ -297,15 +297,35 @@ body {
 /* Styles for Near Me button */
 .near-me-btn {
   margin-top: 10px;
-  padding: 10px 20px;
-  background: #2a9d8f;
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
   color: #fff;
   border: none;
-  border-radius: 25px;
-  font-size: 1rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
+
 .near-me-btn:hover {
-  background: #21867a;
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1);
+}
+
+.near-me-btn:active {
+  transform: scale(0.97);
+  filter: brightness(0.9);
+}
+
+/* Mobile friendly adjustments */
+@media (max-width: 480px) {
+  .near-me-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+  }
 }
