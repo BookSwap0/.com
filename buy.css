@@ -292,3 +292,20 @@ body {
     min-height: 250px; /* Further reduction for mobile cards */
   }
 }
+/* ... existing CSS ... */
+
+/* Styles for Near Me button */
+.near-me-btn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #2a9d8f;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.near-me-btn:hover {
+  background: #21867a;
+}
