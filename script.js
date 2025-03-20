@@ -28,10 +28,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Generate a unique identifier for the user if not already set.
-let currentUser = localStorage.getItem('ownerId');
+let currentUser = localStorage.getItem("ownerId");
 if (!currentUser) {
-  currentUser = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('ownerId', currentUser);
+  currentUser =
+    (crypto.randomUUID && crypto.randomUUID()) ||
+    Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("ownerId", currentUser);
 }
 console.log("Current User ID:", currentUser);
 
@@ -48,7 +50,7 @@ const BookManager = {
       }
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Error reading image'));
+      reader.onerror = () => reject(new Error("Error reading image"));
       reader.readAsDataURL(file);
     });
   },
@@ -58,8 +60,8 @@ const BookManager = {
       const images = await Promise.all(
         Array.from(files)
           .slice(0, this.MAX_IMAGES)
-          .map(file =>
-            this.processImage(file).then(src => ({ src, name: file.name }))
+          .map((file) =>
+            this.processImage(file).then((src) => ({ src, name: file.name }))
           )
       );
       return images;
@@ -77,7 +79,7 @@ const BookManager = {
       }
       if (files.length > 0 || !existingId) {
         const processedImages = await this.handleImages(files);
-        images = processedImages.map(imgObj => imgObj.src);
+        images = processedImages.map((imgObj) => imgObj.src);
       }
       const bookData = {
         owner: currentUser,
@@ -86,15 +88,15 @@ const BookManager = {
         price: parseFloat(formData.price),
         condition: formData.condition,
         location: formData.location.trim(),
-        phone: formData.phone.replace(/\D/g, '').slice(0, 10),
+        phone: formData.phone.replace(/\D/g, "").slice(0, 10),
         images,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       if (isNaN(bookData.price) || bookData.price <= 0) {
-        throw new Error('Please enter a valid price');
+        throw new Error("Please enter a valid price");
       }
-      
+
       if (existingId) {
         await updateDoc(doc(db, "books", existingId), bookData);
         return existingId;
@@ -113,13 +115,13 @@ const BookManager = {
     try {
       if (confirm("Are you sure you want to delete this listing?")) {
         await deleteDoc(doc(db, "books", id));
-        alert('Listing deleted successfully');
+        alert("Listing deleted successfully");
       }
     } catch (error) {
       alert(`Deletion failed: ${error.message}`);
       console.error("deleteListing error:", error);
     }
-  }
+  },
 };
 
 // ------------------------------
@@ -143,19 +145,29 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Get coordinates for a given location string using Nominatim Search API
+// Cache for geocoded locations to minimize API calls
+const geocodeCache = {};
+
+// Get coordinates for a given location string using Nominatim Search API with caching
 async function getCoordinatesForLocation(location) {
+  if (geocodeCache[location]) {
+    return geocodeCache[location];
+  }
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`
     );
     const data = await response.json();
     if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      geocodeCache[location] = coords;
+      return coords;
     }
   } catch (e) {
     console.error("Geocoding failed for location:", location, e);
   }
+  // If no data returned, cache a null value so we don't repeatedly request it.
+  geocodeCache[location] = null;
   return null;
 }
 
@@ -163,9 +175,9 @@ async function getCoordinatesForLocation(location) {
 // Buy Page Implementation
 // ------------------------------
 async function initializeBuyPage() {
-  const bookGrid = document.getElementById('bookGrid');
-  const searchInput = document.getElementById('searchInput');
-  const nearMeBtn = document.getElementById('nearMeBtn');
+  const bookGrid = document.getElementById("bookGrid");
+  const searchInput = document.getElementById("searchInput");
+  const nearMeBtn = document.getElementById("nearMeBtn");
 
   if (!bookGrid) {
     console.error("Element with ID 'bookGrid' not found.");
@@ -177,7 +189,7 @@ async function initializeBuyPage() {
 
   // Render books to the grid.
   function renderBooks(books) {
-    bookGrid.innerHTML = books.map(createBookCard).join('');
+    bookGrid.innerHTML = books.map(createBookCard).join("");
     highlightNewBook();
   }
 
@@ -189,16 +201,17 @@ async function initializeBuyPage() {
       allBooks = [];
       return;
     }
-    allBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    allBooks = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     renderBooks(allBooks);
   });
 
   // Search functionality using the local allBooks array.
-  searchInput.addEventListener('input', () => {
+  searchInput.addEventListener("input", () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
-    const filteredBooks = allBooks.filter(book =>
-      book.title.toLowerCase().includes(searchTerm) ||
-      book.author.toLowerCase().includes(searchTerm)
+    const filteredBooks = allBooks.filter(
+      (book) =>
+        book.title.toLowerCase().includes(searchTerm) ||
+        book.author.toLowerCase().includes(searchTerm)
     );
     if (filteredBooks.length === 0) {
       bookGrid.innerHTML = "<p>No matching books found</p>";
@@ -209,13 +222,16 @@ async function initializeBuyPage() {
 
   // Helper: Sort books by distance from user's location.
   async function sortBooksByDistance(userLat, userLon) {
-    // For each book, attempt to get coordinates and calculate the distance.
+    // Map each book to a Promise resolving to the book with a distance property.
     const booksWithDistance = await Promise.all(
       allBooks.map(async (book) => {
         const coords = await getCoordinatesForLocation(book.location);
+        // If geocoding fails, assign a very high distance so that book is placed at the bottom.
         const distance = coords
           ? calculateDistance(userLat, userLon, coords.lat, coords.lon)
-          : Infinity;
+          : Number.MAX_VALUE;
+        // (Optional) Log for debugging.
+        console.log(`Book: ${book.title}, Location: ${book.location}, Distance: ${distance}`);
         return { ...book, distance };
       })
     );
@@ -248,13 +264,13 @@ async function initializeBuyPage() {
   // Helper: Highlight new book if applicable.
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
-    const newId = urlParams.get('new');
+    const newId = urlParams.get("new");
     if (newId) {
-      history.replaceState(null, '', 'buy.html');
+      history.replaceState(null, "", "buy.html");
       const newBookCard = document.querySelector(`[data-id="${newId}"]`);
       if (newBookCard) {
-        newBookCard.scrollIntoView({ behavior: 'smooth' });
-        newBookCard.style.animation = 'highlightPulse 1.5s ease 2';
+        newBookCard.scrollIntoView({ behavior: "smooth" });
+        newBookCard.style.animation = "highlightPulse 1.5s ease 2";
       }
     }
   }
@@ -290,8 +306,8 @@ function createBookCard(book) {
 }
 
 // Initialize the page on DOMContentLoaded.
-document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('bookGrid')) {
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("bookGrid")) {
     initializeBuyPage();
   }
 });
