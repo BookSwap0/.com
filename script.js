@@ -39,6 +39,7 @@ console.log("Current User ID:", currentUser);
 const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 2,
+
   processImage(file) {
     return new Promise((resolve, reject) => {
       if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
@@ -51,6 +52,7 @@ const BookManager = {
       reader.readAsDataURL(file);
     });
   },
+
   async handleImages(files) {
     try {
       const images = await Promise.all(
@@ -65,6 +67,7 @@ const BookManager = {
       throw new Error(error.message);
     }
   },
+
   async saveListing(formData, files, existingId = null) {
     try {
       let images = [];
@@ -77,7 +80,7 @@ const BookManager = {
         images = processedImages.map(imgObj => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,
+        owner: currentUser,  // Tag the listing with the unique identifier.
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
@@ -105,6 +108,7 @@ const BookManager = {
       return null;
     }
   },
+
   async deleteListing(id) {
     try {
       if (confirm("Are you sure you want to delete this listing?")) {
@@ -138,6 +142,7 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
+        // Display stored images
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -224,9 +229,10 @@ async function initializeBuyPage() {
     return;
   }
 
+  // Store all books locally for faster search filtering.
   let allBooks = [];
 
-  // Render books to the grid
+  // Helper function to render books
   function renderBooks(books) {
     if (!books || books.length === 0) {
       bookGrid.innerHTML = "<p>No books available</p>";
@@ -250,7 +256,7 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   });
 
-  // Search functionality
+  // Search functionality using the local allBooks array
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const filteredBooks = allBooks.filter(book =>
@@ -264,44 +270,23 @@ async function initializeBuyPage() {
     }
   });
 
-  // --- Geolocation & Reverse Geocoding ---  
-  // Use geolocation options to reduce waiting time
-  function getUserPosition() {
-    const options = {
-      enableHighAccuracy: false,
-      timeout: 5000,
-      maximumAge: 60000 // allow cached position up to 60 seconds old
-    };
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, options);
-    });
-  }
-
-  // Cache reverse geocoding result (expires in 5 minutes)
-  let cachedCity = null;
-  let cacheTimestamp = null;
+  // Helper: Reverse geocode to get city name from coordinates using Nominatim API
   async function getCityFromCoordinates(lat, lon) {
-    const now = Date.now();
-    if (cachedCity && cacheTimestamp && (now - cacheTimestamp < 300000)) {
-      return cachedCity;
-    }
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
       const data = await response.json();
-      const city = data.address.city || data.address.town || data.address.village || data.address.county || "";
-      cachedCity = city;
-      cacheTimestamp = now;
-      return city;
+      return data.address.city || data.address.town || data.address.village || data.address.county || "";
     } catch (e) {
       console.error("Reverse geocoding failed", e);
       return "";
     }
   }
 
-  // Fuzzy sort books so that listings with matching location appear first
+  // Helper: Sort books so that those near the specified city come first
   function sortBooksByProximity(city) {
     if (!city) return;
     console.log("Sorting books by proximity to:", city);
+    // Use a simple scoring system: 0 if the book's location includes the city name, 1 otherwise.
     allBooks.sort((a, b) => {
       const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
@@ -310,29 +295,27 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   }
 
-  // "Near Me" button: get user's location and update listings
+  // Near Me button functionality
   if (nearMeBtn) {
-    nearMeBtn.addEventListener('click', async () => {
-      nearMeBtn.disabled = true;
-      nearMeBtn.textContent = "Locating...";
-      try {
-        const position = await getUserPosition();
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        console.log("User coordinates:", lat, lon);
-        const city = await getCityFromCoordinates(lat, lon);
-        console.log("Detected city:", city);
-        if (city) {
-          sortBooksByProximity(city);
-          alert(`Showing books near ${city}`);
-        } else {
-          alert("Could not determine your city from location.");
-        }
-      } catch (error) {
-        alert("Geolocation error: " + error.message);
-      } finally {
-        nearMeBtn.disabled = false;
-        nearMeBtn.textContent = "Near Me";
+    nearMeBtn.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          console.log("User coordinates:", lat, lon);
+          const city = await getCityFromCoordinates(lat, lon);
+          console.log("Detected city:", city);
+          if (city) {
+            sortBooksByProximity(city);
+            alert(`Showing books near ${city}`);
+          } else {
+            alert("Could not determine your city from location.");
+          }
+        }, (error) => {
+          alert("Geolocation error: " + error.message);
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
       }
     });
   }
