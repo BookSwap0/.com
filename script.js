@@ -80,7 +80,7 @@ const BookManager = {
         images = processedImages.map(imgObj => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,  // Tag the listing with the unique identifier.
+        owner: currentUser,
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
@@ -121,102 +121,6 @@ const BookManager = {
     }
   }
 };
-
-// --- Sell Page Implementation ---
-async function initializeSellPage() {
-  const form = document.getElementById('sellForm');
-  const fileInput = document.getElementById('bookCover');
-  const previewContainer = document.getElementById('previewContainer');
-  const urlParams = new URLSearchParams(window.location.search);
-  const editId = urlParams.get('edit');
-
-  // If editing, load the existing listing (only if owned by currentUser)
-  if (editId) {
-    try {
-      const docSnap = await getDoc(doc(db, "books", editId));
-      if (docSnap.exists() && docSnap.data().owner === currentUser) {
-        const book = docSnap.data();
-        form.title.value = book.title;
-        form.author.value = book.author;
-        form.price.value = book.price;
-        form.condition.value = book.condition;
-        form.location.value = book.location;
-        form.phone.value = book.phone;
-        // Display stored images
-        previewContainer.innerHTML = book.images
-          .map(src => `
-            <div class="preview-item">
-              <img src="${src}" class="preview-img" alt="Book preview" onerror="this.style.display='none';">
-            </div>
-          `)
-          .join('');
-        if (book.images.length > 0) {
-          previewContainer.style.display = 'grid';
-        }
-      } else {
-        alert("You are not authorized to edit this listing.");
-        window.location.href = "buy.html";
-        return;
-      }
-    } catch (error) {
-      console.error("Error loading listing:", error);
-    }
-  }
-
-  // Image preview on file selection
-  fileInput.addEventListener('change', () => {
-    const files = fileInput.files;
-    previewContainer.innerHTML = "";
-    if (!files || files.length === 0) {
-      previewContainer.style.display = 'none';
-      return;
-    }
-    Array.from(files).forEach(file => {
-      const previewItem = document.createElement('div');
-      previewItem.className = 'preview-item';
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'preview-img';
-          img.alt = file.name;
-          previewItem.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        const span = document.createElement('span');
-        span.textContent = file.name;
-        previewItem.appendChild(span);
-      }
-      previewContainer.appendChild(previewItem);
-    });
-    previewContainer.style.display = "grid";
-  });
-
-  // Form submission handler.
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    try {
-      const formData = {
-        title: form.title.value,
-        author: form.author.value,
-        price: form.price.value,
-        condition: form.condition.value,
-        location: form.location.value,
-        phone: form.phone.value
-      };
-      const bookId = await BookManager.saveListing(formData, fileInput.files, editId);
-      if (bookId) {
-        window.location.href = `buy.html?new=${bookId}`;
-      }
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-}
 
 // --- Buy Page Implementation ---
 async function initializeBuyPage() {
@@ -277,17 +181,16 @@ async function initializeBuyPage() {
     }
   }
 
-  // Helper: Sort books so that those near the specified city come first
+  // Helper: Sort books so that those matching the detected city come first
   function sortBooksByProximity(city) {
     if (!city) return;
-    allBooks.sort((a, b) => {
-      const aMatch = a.location.toLowerCase().includes(city.toLowerCase());
-      const bMatch = b.location.toLowerCase().includes(city.toLowerCase());
-      if (aMatch && !bMatch) return -1;
-      if (!aMatch && bMatch) return 1;
-      return 0;
+    const sortedBooks = [...allBooks].sort((a, b) => {
+      const scoreA = a.location.toLowerCase().includes(city.toLowerCase()) ? 1 : 0;
+      const scoreB = b.location.toLowerCase().includes(city.toLowerCase()) ? 1 : 0;
+      // Books with a match (score 1) come first
+      return scoreB - scoreA;
     });
-    renderBooks(allBooks);
+    renderBooks(sortedBooks);
   }
 
   // Near Me button functionality
@@ -313,6 +216,7 @@ async function initializeBuyPage() {
     });
   }
 
+  // Helper: Highlight new book if applicable
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get('new');
@@ -356,8 +260,9 @@ function createBookCard(book) {
   `;
 }
 
+// Initialize pages on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) initializeSellPage();
+  // Only initialize the buy page if the bookGrid exists.
   if (document.getElementById('bookGrid')) initializeBuyPage();
 });
 
