@@ -1,4 +1,4 @@
-// Import Firebase modules 
+// Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import {
   getFirestore,
@@ -28,14 +28,18 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Generate a unique identifier for the user if not already set.
-let currentUser = localStorage.getItem('ownerId');
+let currentUser = localStorage.getItem("ownerId");
 if (!currentUser) {
-  currentUser = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('ownerId', currentUser);
+  currentUser =
+    (crypto.randomUUID && crypto.randomUUID()) ||
+    Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("ownerId", currentUser);
 }
 console.log("Current User ID:", currentUser);
 
-// --- BookManager Object ---
+// ------------------------------
+// BookManager Object
+// ------------------------------
 const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 2,
@@ -48,7 +52,7 @@ const BookManager = {
       }
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Error reading image'));
+      reader.onerror = () => reject(new Error("Error reading image"));
       reader.readAsDataURL(file);
     });
   },
@@ -58,8 +62,8 @@ const BookManager = {
       const images = await Promise.all(
         Array.from(files)
           .slice(0, this.MAX_IMAGES)
-          .map(file =>
-            this.processImage(file).then(src => ({ src, name: file.name }))
+          .map((file) =>
+            this.processImage(file).then((src) => ({ src, name: file.name }))
           )
       );
       return images;
@@ -77,24 +81,24 @@ const BookManager = {
       }
       if (files.length > 0 || !existingId) {
         const processedImages = await this.handleImages(files);
-        images = processedImages.map(imgObj => imgObj.src);
+        images = processedImages.map((imgObj) => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,  // Tag the listing with the unique identifier.
+        owner: currentUser,
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
         condition: formData.condition,
         location: formData.location.trim(),
-        phone: formData.phone.replace(/\D/g, '').slice(0, 10),
+        phone: formData.phone.replace(/\D/g, "").slice(0, 10),
         images,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       if (isNaN(bookData.price) || bookData.price <= 0) {
-        throw new Error('Please enter a valid price');
+        throw new Error("Please enter a valid price");
       }
-      
+
       if (existingId) {
         await updateDoc(doc(db, "books", existingId), bookData);
         return existingId;
@@ -113,135 +117,107 @@ const BookManager = {
     try {
       if (confirm("Are you sure you want to delete this listing?")) {
         await deleteDoc(doc(db, "books", id));
-        alert('Listing deleted successfully');
+        alert("Listing deleted successfully");
       }
     } catch (error) {
       alert(`Deletion failed: ${error.message}`);
       console.error("deleteListing error:", error);
     }
-  }
+  },
 };
 
-// --- Sell Page Implementation ---
-async function initializeSellPage() {
-  const form = document.getElementById('sellForm');
-  const fileInput = document.getElementById('bookCover');
-  const previewContainer = document.getElementById('previewContainer');
-  const urlParams = new URLSearchParams(window.location.search);
-  const editId = urlParams.get('edit');
+// ------------------------------
+// Helper Functions for "Near Me"
+// ------------------------------
 
-  // Load the listing if editing and owned by currentUser
-  if (editId) {
-    try {
-      const docSnap = await getDoc(doc(db, "books", editId));
-      if (docSnap.exists() && docSnap.data().owner === currentUser) {
-        const book = docSnap.data();
-        form.title.value = book.title;
-        form.author.value = book.author;
-        form.price.value = book.price;
-        form.condition.value = book.condition;
-        form.location.value = book.location;
-        form.phone.value = book.phone;
-        previewContainer.innerHTML = book.images
-          .map(src => `
-            <div class="preview-item">
-              <img src="${src}" class="preview-img" alt="Book preview" onerror="this.style.display='none';">
-            </div>
-          `)
-          .join('');
-        if (book.images.length > 0) {
-          previewContainer.style.display = 'grid';
-        }
-      } else {
-        alert("You are not authorized to edit this listing.");
-        window.location.href = "buy.html";
-        return;
-      }
-    } catch (error) {
-      console.error("Error loading listing:", error);
-    }
-  }
-
-  // Image preview when files are selected
-  fileInput.addEventListener('change', () => {
-    const files = fileInput.files;
-    previewContainer.innerHTML = "";
-    if (!files || files.length === 0) {
-      previewContainer.style.display = 'none';
-      return;
-    }
-    Array.from(files).forEach(file => {
-      const previewItem = document.createElement('div');
-      previewItem.className = 'preview-item';
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'preview-img';
-          img.alt = file.name;
-          previewItem.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        const span = document.createElement('span');
-        span.textContent = file.name;
-        previewItem.appendChild(span);
-      }
-      previewContainer.appendChild(previewItem);
-    });
-    previewContainer.style.display = "grid";
-  });
-
-  // Form submission
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    try {
-      const formData = {
-        title: form.title.value,
-        author: form.author.value,
-        price: form.price.value,
-        condition: form.condition.value,
-        location: form.location.value,
-        phone: form.phone.value
-      };
-      const bookId = await BookManager.saveListing(formData, fileInput.files, editId);
-      if (bookId) {
-        window.location.href = `buy.html?new=${bookId}`;
-      }
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
+// Convert degrees to radians
+function toRad(deg) {
+  return deg * Math.PI / 180;
 }
 
-// --- Buy Page Implementation ---
+// Calculate distance (in km) between two coordinates using the Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Reverse geocode user's coordinates to get the city (or town/village)
+async function getCityFromCoordinates(lat, lon) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+    );
+    const data = await response.json();
+    return data.address.city || data.address.town || data.address.village || "";
+  } catch (e) {
+    console.error("Reverse geocoding failed", e);
+    return "";
+  }
+}
+
+// Use both in-memory cache and localStorage to store geocoding results.
+const geocodeCache = {};
+
+async function getCoordinatesForLocation(location) {
+  if (geocodeCache[location]) {
+    return geocodeCache[location];
+  }
+  // Try localStorage first
+  const storageKey = "geocode:" + location;
+  const stored = localStorage.getItem(storageKey);
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    geocodeCache[location] = parsed;
+    return parsed;
+  }
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`
+    );
+    const data = await response.json();
+    if (data && data.length > 0) {
+      const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      geocodeCache[location] = coords;
+      localStorage.setItem(storageKey, JSON.stringify(coords));
+      return coords;
+    }
+  } catch (e) {
+    console.error("Geocoding failed for location:", location, e);
+  }
+  geocodeCache[location] = null;
+  localStorage.setItem(storageKey, JSON.stringify(null));
+  return null;
+}
+
+// ------------------------------
+// Buy Page Implementation
+// ------------------------------
 async function initializeBuyPage() {
-  const bookGrid = document.getElementById('bookGrid');
-  const searchInput = document.getElementById('searchInput');
-  const nearMeBtn = document.getElementById('nearMeBtn');
+  const bookGrid = document.getElementById("bookGrid");
+  const searchInput = document.getElementById("searchInput");
+  const nearMeBtn = document.getElementById("nearMeBtn");
 
   if (!bookGrid) {
     console.error("Element with ID 'bookGrid' not found.");
     return;
   }
 
+  // Store all books locally.
   let allBooks = [];
 
-  // Render books to the grid
+  // Render books to the grid.
   function renderBooks(books) {
-    if (!books || books.length === 0) {
-      bookGrid.innerHTML = "<p>No books available</p>";
-      return;
-    }
-    console.log("Rendering books:", books);
-    bookGrid.innerHTML = books.map(createBookCard).join('');
+    bookGrid.innerHTML = books.map(createBookCard).join("");
     highlightNewBook();
   }
 
-  // Listen for Firestore updates
+  // Listen for Firestore updates.
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
     if (snapshot.empty) {
@@ -249,17 +225,17 @@ async function initializeBuyPage() {
       allBooks = [];
       return;
     }
-    allBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log("Fetched books:", allBooks);
+    allBooks = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     renderBooks(allBooks);
   });
 
-  // Search functionality
-  searchInput.addEventListener('input', () => {
+  // Search functionality.
+  searchInput.addEventListener("input", () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
-    const filteredBooks = allBooks.filter(book =>
-      book.title.toLowerCase().includes(searchTerm) ||
-      book.author.toLowerCase().includes(searchTerm)
+    const filteredBooks = allBooks.filter(
+      (book) =>
+        book.title.toLowerCase().includes(searchTerm) ||
+        book.author.toLowerCase().includes(searchTerm)
     );
     if (filteredBooks.length === 0) {
       bookGrid.innerHTML = "<p>No matching books found</p>";
@@ -268,78 +244,69 @@ async function initializeBuyPage() {
     }
   });
 
-  // Reverse geocode: get city name from coordinates
-  async function getCityFromCoordinates(lat, lon) {
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-      const data = await response.json();
-      return data.address.city || data.address.town || data.address.village || data.address.county || "";
-    } catch (e) {
-      console.error("Reverse geocoding failed", e);
-      return "";
-    }
+  // "Near Me" sorting function:
+  // For each book, calculate the distance from the user.
+  // If the book's location does NOT include the user's city, add a fixed penalty.
+  async function sortBooksByDistance(userLat, userLon) {
+    const userCity = await getCityFromCoordinates(userLat, userLon);
+    console.log("User City:", userCity);
+    const PENALTY = 1000; // km penalty for non-matching city
+
+    const booksWithDistance = await Promise.all(
+      allBooks.map(async (book) => {
+        const coords = await getCoordinatesForLocation(book.location);
+        let distance = Number.MAX_VALUE;
+        if (coords) {
+          distance = calculateDistance(userLat, userLon, coords.lat, coords.lon);
+        }
+        // If the book's location does not include the user city, add the penalty.
+        if (userCity && !book.location.toLowerCase().includes(userCity.toLowerCase())) {
+          distance += PENALTY;
+        }
+        return { ...book, distance };
+      })
+    );
+    booksWithDistance.sort((a, b) => a.distance - b.distance);
+    renderBooks(booksWithDistance);
   }
 
-  // Sort books so that those with matching location appear first
-  function sortBooksByProximity(city) {
-    if (!city) return;
-    console.log("Sorting books by proximity to:", city);
-    allBooks.sort((a, b) => {
-      const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
-      const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
-      return aScore - bScore;
-    });
-    renderBooks(allBooks);
-  }
-
-  // "Near Me" button: get user's location and update listings
+  // Near Me button functionality.
   if (nearMeBtn) {
-    nearMeBtn.addEventListener('click', async () => {
-      nearMeBtn.disabled = true;
-      nearMeBtn.textContent = "Locating...";
+    nearMeBtn.addEventListener("click", () => {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          console.log("User coordinates:", lat, lon);
-          const city = await getCityFromCoordinates(lat, lon);
-          console.log("Detected city:", city);
-          if (city) {
-            sortBooksByProximity(city);
-            alert(`Showing books near ${city}`);
-          } else {
-            alert("Could not determine your city from location.");
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            await sortBooksByDistance(userLat, userLon);
+            alert("Books sorted by proximity from your location.");
+          },
+          (error) => {
+            alert("Geolocation error: " + error.message);
           }
-          nearMeBtn.disabled = false;
-          nearMeBtn.textContent = "Near Me";
-        }, (error) => {
-          alert("Geolocation error: " + error.message);
-          nearMeBtn.disabled = false;
-          nearMeBtn.textContent = "Near Me";
-        });
+        );
       } else {
         alert("Geolocation is not supported by your browser.");
-        nearMeBtn.disabled = false;
-        nearMeBtn.textContent = "Near Me";
       }
     });
   }
 
+  // Highlight new book if applicable.
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
-    const newId = urlParams.get('new');
+    const newId = urlParams.get("new");
     if (newId) {
-      history.replaceState(null, '', 'buy.html');
+      history.replaceState(null, "", "buy.html");
       const newBookCard = document.querySelector(`[data-id="${newId}"]`);
       if (newBookCard) {
-        newBookCard.scrollIntoView({ behavior: 'smooth' });
-        newBookCard.style.animation = 'highlightPulse 1.5s ease 2';
+        newBookCard.scrollIntoView({ behavior: "smooth" });
+        newBookCard.style.animation = "highlightPulse 1.5s ease 2";
       }
     }
   }
 }
 
-// Helper: Create HTML for a single book card
+// Helper: Create HTML for a single book card.
 function createBookCard(book) {
   return `
     <div class="book-card" data-id="${book.id}">
@@ -368,10 +335,12 @@ function createBookCard(book) {
   `;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('sellForm')) initializeSellPage();
-  if (document.getElementById('bookGrid')) initializeBuyPage();
+// Initialize the page on DOMContentLoaded.
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("bookGrid")) {
+    initializeBuyPage();
+  }
 });
 
-// Expose BookManager globally for inline HTML calls
+// Expose BookManager globally for inline HTML calls.
 window.BookManager = BookManager;
