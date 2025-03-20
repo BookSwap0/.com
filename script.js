@@ -130,7 +130,7 @@ async function initializeSellPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
-  // Load the listing if editing and owned by currentUser
+  // If editing, load the existing listing (only if owned by currentUser)
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -142,6 +142,7 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
+        // Display stored images
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -162,7 +163,7 @@ async function initializeSellPage() {
     }
   }
 
-  // Image preview when files are selected
+  // Image preview on file selection
   fileInput.addEventListener('change', () => {
     const files = fileInput.files;
     previewContainer.innerHTML = "";
@@ -193,7 +194,7 @@ async function initializeSellPage() {
     previewContainer.style.display = "grid";
   });
 
-  // Form submission
+  // Form submission handler.
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -268,23 +269,41 @@ async function initializeBuyPage() {
     }
   });
 
-  // Reverse geocode: get city name from coordinates
+  // --- Geolocation & Reverse Geocoding ---
+  // Promise wrapper for geolocation
+  function getUserPosition() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+  }
+
+  // Cache for reverse geocoding result (expires in 5 minutes)
+  let cachedCity = null;
+  let cacheTimestamp = null;
   async function getCityFromCoordinates(lat, lon) {
+    const now = Date.now();
+    if (cachedCity && cacheTimestamp && (now - cacheTimestamp < 300000)) {
+      return cachedCity;
+    }
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
       const data = await response.json();
-      return data.address.city || data.address.town || data.address.village || data.address.county || "";
+      const city = data.address.city || data.address.town || data.address.village || data.address.county || "";
+      cachedCity = city;
+      cacheTimestamp = now;
+      return city;
     } catch (e) {
       console.error("Reverse geocoding failed", e);
       return "";
     }
   }
 
-  // Sort books so that those with matching location appear first
+  // Fuzzy sort books so that those with matching location appear first
   function sortBooksByProximity(city) {
     if (!city) return;
     console.log("Sorting books by proximity to:", city);
     allBooks.sort((a, b) => {
+      // Lower score if the listing's location includes the city name
       const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       return aScore - bScore;
@@ -297,28 +316,22 @@ async function initializeBuyPage() {
     nearMeBtn.addEventListener('click', async () => {
       nearMeBtn.disabled = true;
       nearMeBtn.textContent = "Locating...";
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          console.log("User coordinates:", lat, lon);
-          const city = await getCityFromCoordinates(lat, lon);
-          console.log("Detected city:", city);
-          if (city) {
-            sortBooksByProximity(city);
-            alert(`Showing books near ${city}`);
-          } else {
-            alert("Could not determine your city from location.");
-          }
-          nearMeBtn.disabled = false;
-          nearMeBtn.textContent = "Near Me";
-        }, (error) => {
-          alert("Geolocation error: " + error.message);
-          nearMeBtn.disabled = false;
-          nearMeBtn.textContent = "Near Me";
-        });
-      } else {
-        alert("Geolocation is not supported by your browser.");
+      try {
+        const position = await getUserPosition();
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        console.log("User coordinates:", lat, lon);
+        const city = await getCityFromCoordinates(lat, lon);
+        console.log("Detected city:", city);
+        if (city) {
+          sortBooksByProximity(city);
+          alert(`Showing books near ${city}`);
+        } else {
+          alert("Could not determine your city from location.");
+        }
+      } catch (error) {
+        alert("Geolocation error: " + error.message);
+      } finally {
         nearMeBtn.disabled = false;
         nearMeBtn.textContent = "Near Me";
       }
