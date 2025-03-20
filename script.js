@@ -68,6 +68,7 @@ const BookManager = {
     }
   },
 
+  // Note: Ensure your formData contains coordinates (lat/lon) if available.
   async saveListing(formData, files, existingId = null) {
     try {
       let images = [];
@@ -80,7 +81,7 @@ const BookManager = {
         images = processedImages.map(imgObj => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,  // Tag the listing with the unique identifier.
+        owner: currentUser,  
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
@@ -88,6 +89,8 @@ const BookManager = {
         location: formData.location.trim(),
         phone: formData.phone.replace(/\D/g, '').slice(0, 10),
         images,
+        // Optionally include coordinates if provided by your form or geocoding API.
+        coordinates: formData.coordinates || null,
         timestamp: new Date().toISOString()
       };
 
@@ -130,7 +133,6 @@ async function initializeSellPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
-  // If editing, load the existing listing (only if owned by currentUser)
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -142,7 +144,10 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
-        // Display stored images
+        // Optionally prefill coordinates if available
+        if (book.coordinates) {
+          form.coordinates.value = `${book.coordinates.lat}, ${book.coordinates.lon}`;
+        }
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -163,7 +168,6 @@ async function initializeSellPage() {
     }
   }
 
-  // Image preview on file selection
   fileInput.addEventListener('change', () => {
     const files = fileInput.files;
     previewContainer.innerHTML = "";
@@ -194,19 +198,27 @@ async function initializeSellPage() {
     previewContainer.style.display = "grid";
   });
 
-  // Form submission handler.
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     try {
+      // Optional: Parse coordinates from a new input field if available.
+      let coords = null;
+      if (form.coordinates && form.coordinates.value) {
+        const parts = form.coordinates.value.split(',');
+        if (parts.length === 2) {
+          coords = { lat: parseFloat(parts[0]), lon: parseFloat(parts[1]) };
+        }
+      }
       const formData = {
         title: form.title.value,
         author: form.author.value,
         price: form.price.value,
         condition: form.condition.value,
         location: form.location.value,
-        phone: form.phone.value
+        phone: form.phone.value,
+        coordinates: coords
       };
       const bookId = await BookManager.saveListing(formData, fileInput.files, editId);
       if (bookId) {
@@ -231,7 +243,6 @@ async function initializeBuyPage() {
 
   let allBooks = [];
 
-  // Render books to the grid
   function renderBooks(books) {
     if (!books || books.length === 0) {
       bookGrid.innerHTML = "<p>No books available</p>";
@@ -242,7 +253,6 @@ async function initializeBuyPage() {
     highlightNewBook();
   }
 
-  // Listen for Firestore updates
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
     if (snapshot.empty) {
@@ -255,7 +265,6 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   });
 
-  // Search functionality
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const filteredBooks = allBooks.filter(book =>
@@ -269,66 +278,53 @@ async function initializeBuyPage() {
     }
   });
 
-  // --- Geolocation & Reverse Geocoding ---
-  // Promise wrapper for geolocation
+  // --- Geolocation & Sorting by Distance ---
   function getUserPosition() {
+    const options = {
+      enableHighAccuracy: false,
+      timeout: 5000,
+      maximumAge: 60000
+    };
     return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
     });
   }
 
-  // Cache for reverse geocoding result (expires in 5 minutes)
-  let cachedCity = null;
-  let cacheTimestamp = null;
-  async function getCityFromCoordinates(lat, lon) {
-    const now = Date.now();
-    if (cachedCity && cacheTimestamp && (now - cacheTimestamp < 300000)) {
-      return cachedCity;
-    }
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-      const data = await response.json();
-      const city = data.address.city || data.address.town || data.address.village || data.address.county || "";
-      cachedCity = city;
-      cacheTimestamp = now;
-      return city;
-    } catch (e) {
-      console.error("Reverse geocoding failed", e);
-      return "";
-    }
+  // Haversine formula to calculate distance in kilometers
+  function computeDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 
-  // Fuzzy sort books so that those with matching location appear first
-  function sortBooksByProximity(city) {
-    if (!city) return;
-    console.log("Sorting books by proximity to:", city);
+  // Sort books by distance if they have coordinates; those without coordinates fall to the end.
+  function sortBooksByDistance(userLat, userLon) {
+    console.log("Sorting books by distance from:", userLat, userLon);
     allBooks.sort((a, b) => {
-      // Lower score if the listing's location includes the city name
-      const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
-      const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
-      return aScore - bScore;
+      const distA = a.coordinates ? computeDistance(userLat, userLon, a.coordinates.lat, a.coordinates.lon) : Infinity;
+      const distB = b.coordinates ? computeDistance(userLat, userLon, b.coordinates.lat, b.coordinates.lon) : Infinity;
+      return distA - distB;
     });
     renderBooks(allBooks);
   }
 
-  // "Near Me" button: get user's location and update listings
   if (nearMeBtn) {
     nearMeBtn.addEventListener('click', async () => {
       nearMeBtn.disabled = true;
       nearMeBtn.textContent = "Locating...";
       try {
         const position = await getUserPosition();
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        console.log("User coordinates:", lat, lon);
-        const city = await getCityFromCoordinates(lat, lon);
-        console.log("Detected city:", city);
-        if (city) {
-          sortBooksByProximity(city);
-          alert(`Showing books near ${city}`);
-        } else {
-          alert("Could not determine your city from location.");
-        }
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+        console.log("User coordinates:", userLat, userLon);
+        sortBooksByDistance(userLat, userLon);
+        alert("Showing local listings sorted by distance.");
       } catch (error) {
         alert("Geolocation error: " + error.message);
       } finally {
