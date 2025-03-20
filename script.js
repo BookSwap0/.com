@@ -161,13 +161,20 @@ async function getCityFromCoordinates(lat, lon) {
   }
 }
 
-// Cache for geocoding listings to reduce API calls
+// Use both in-memory cache and localStorage to store geocoding results.
 const geocodeCache = {};
 
-// Get coordinates for a given location string using Nominatim Search API (with caching)
 async function getCoordinatesForLocation(location) {
   if (geocodeCache[location]) {
     return geocodeCache[location];
+  }
+  // Try localStorage first
+  const storageKey = "geocode:" + location;
+  const stored = localStorage.getItem(storageKey);
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    geocodeCache[location] = parsed;
+    return parsed;
   }
   try {
     const response = await fetch(
@@ -177,12 +184,14 @@ async function getCoordinatesForLocation(location) {
     if (data && data.length > 0) {
       const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
       geocodeCache[location] = coords;
+      localStorage.setItem(storageKey, JSON.stringify(coords));
       return coords;
     }
   } catch (e) {
     console.error("Geocoding failed for location:", location, e);
   }
   geocodeCache[location] = null;
+  localStorage.setItem(storageKey, JSON.stringify(null));
   return null;
 }
 
@@ -235,13 +244,13 @@ async function initializeBuyPage() {
     }
   });
 
-  // New "Near Me" sorting function:
+  // "Near Me" sorting function:
   // For each book, calculate the distance from the user.
-  // If the book's location does NOT include the user's city, add a penalty so it sorts lower.
+  // If the book's location does NOT include the user's city, add a fixed penalty.
   async function sortBooksByDistance(userLat, userLon) {
     const userCity = await getCityFromCoordinates(userLat, userLon);
     console.log("User City:", userCity);
-    const PENALTY = 1000; // km penalty for listings not matching the user's city
+    const PENALTY = 1000; // km penalty for non-matching city
 
     const booksWithDistance = await Promise.all(
       allBooks.map(async (book) => {
@@ -250,7 +259,7 @@ async function initializeBuyPage() {
         if (coords) {
           distance = calculateDistance(userLat, userLon, coords.lat, coords.lon);
         }
-        // If the book's location string does not include the user city, add penalty.
+        // If the book's location does not include the user city, add the penalty.
         if (userCity && !book.location.toLowerCase().includes(userCity.toLowerCase())) {
           distance += PENALTY;
         }
