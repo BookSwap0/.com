@@ -130,7 +130,7 @@ async function initializeSellPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const editId = urlParams.get('edit');
 
-  // If editing, load the existing listing (only if owned by currentUser)
+  // Load the listing if editing and owned by currentUser
   if (editId) {
     try {
       const docSnap = await getDoc(doc(db, "books", editId));
@@ -142,7 +142,6 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
-        // Display stored images
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -163,7 +162,7 @@ async function initializeSellPage() {
     }
   }
 
-  // Image preview on file selection
+  // Image preview when files are selected
   fileInput.addEventListener('change', () => {
     const files = fileInput.files;
     previewContainer.innerHTML = "";
@@ -194,7 +193,7 @@ async function initializeSellPage() {
     previewContainer.style.display = "grid";
   });
 
-  // Form submission handler.
+  // Form submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -229,10 +228,9 @@ async function initializeBuyPage() {
     return;
   }
 
-  // Store all books locally for faster search filtering.
   let allBooks = [];
 
-  // Helper function to render books
+  // Render books to the grid
   function renderBooks(books) {
     if (!books || books.length === 0) {
       bookGrid.innerHTML = "<p>No books available</p>";
@@ -256,7 +254,7 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   });
 
-  // Search functionality using the local allBooks array
+  // Search functionality
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const filteredBooks = allBooks.filter(book =>
@@ -270,7 +268,7 @@ async function initializeBuyPage() {
     }
   });
 
-  // Helper: Reverse geocode to get city name from coordinates using Nominatim API
+  // Reverse geocode: get city name from coordinates
   async function getCityFromCoordinates(lat, lon) {
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
@@ -282,11 +280,10 @@ async function initializeBuyPage() {
     }
   }
 
-  // Helper: Sort books so that those near the specified city come first
+  // Sort books so that those with matching location appear first
   function sortBooksByProximity(city) {
     if (!city) return;
     console.log("Sorting books by proximity to:", city);
-    // Use a simple scoring system: 0 if the book's location includes the city name, 1 otherwise.
     allBooks.sort((a, b) => {
       const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
@@ -295,9 +292,11 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   }
 
-  // Near Me button functionality
+  // "Near Me" button: get user's location and update listings
   if (nearMeBtn) {
-    nearMeBtn.addEventListener('click', () => {
+    nearMeBtn.addEventListener('click', async () => {
+      nearMeBtn.disabled = true;
+      nearMeBtn.textContent = "Locating...";
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
@@ -311,11 +310,17 @@ async function initializeBuyPage() {
           } else {
             alert("Could not determine your city from location.");
           }
+          nearMeBtn.disabled = false;
+          nearMeBtn.textContent = "Near Me";
         }, (error) => {
           alert("Geolocation error: " + error.message);
+          nearMeBtn.disabled = false;
+          nearMeBtn.textContent = "Near Me";
         });
       } else {
         alert("Geolocation is not supported by your browser.");
+        nearMeBtn.disabled = false;
+        nearMeBtn.textContent = "Near Me";
       }
     });
   }
