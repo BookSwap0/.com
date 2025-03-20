@@ -39,6 +39,7 @@ console.log("Current User ID:", currentUser);
 const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 2,
+
   processImage(file) {
     return new Promise((resolve, reject) => {
       if (file.size > this.MAX_SIZE_MB * 1024 * 1024) {
@@ -51,6 +52,7 @@ const BookManager = {
       reader.readAsDataURL(file);
     });
   },
+
   async handleImages(files) {
     try {
       const images = await Promise.all(
@@ -65,6 +67,7 @@ const BookManager = {
       throw new Error(error.message);
     }
   },
+
   async saveListing(formData, files, existingId = null) {
     try {
       let images = [];
@@ -77,7 +80,7 @@ const BookManager = {
         images = processedImages.map(imgObj => imgObj.src);
       }
       const bookData = {
-        owner: currentUser,
+        owner: currentUser,  // Tag the listing with the unique identifier.
         title: formData.title.trim(),
         author: formData.author.trim(),
         price: parseFloat(formData.price),
@@ -105,6 +108,7 @@ const BookManager = {
       return null;
     }
   },
+
   async deleteListing(id) {
     try {
       if (confirm("Are you sure you want to delete this listing?")) {
@@ -138,6 +142,7 @@ async function initializeSellPage() {
         form.condition.value = book.condition;
         form.location.value = book.location;
         form.phone.value = book.phone;
+        // Display stored images
         previewContainer.innerHTML = book.images
           .map(src => `
             <div class="preview-item">
@@ -264,20 +269,15 @@ async function initializeBuyPage() {
     }
   });
 
-  // --- Geolocation & Reverse Geocoding ---  
-  // Use geolocation options to reduce waiting time
+  // --- Geolocation & Reverse Geocoding ---
+  // Promise wrapper for geolocation
   function getUserPosition() {
-    const options = {
-      enableHighAccuracy: false,
-      timeout: 5000,
-      maximumAge: 60000 // allow cached position up to 60 seconds old
-    };
     return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      navigator.geolocation.getCurrentPosition(resolve, reject);
     });
   }
 
-  // Cache reverse geocoding result (expires in 5 minutes)
+  // Cache for reverse geocoding result (expires in 5 minutes)
   let cachedCity = null;
   let cacheTimestamp = null;
   async function getCityFromCoordinates(lat, lon) {
@@ -298,11 +298,12 @@ async function initializeBuyPage() {
     }
   }
 
-  // Fuzzy sort books so that listings with matching location appear first
+  // Fuzzy sort books so that those with matching location appear first
   function sortBooksByProximity(city) {
     if (!city) return;
     console.log("Sorting books by proximity to:", city);
     allBooks.sort((a, b) => {
+      // Lower score if the listing's location includes the city name
       const aScore = a.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       const bScore = b.location.toLowerCase().includes(city.toLowerCase()) ? 0 : 1;
       return aScore - bScore;
