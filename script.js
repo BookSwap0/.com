@@ -37,7 +37,9 @@ if (!currentUser) {
 }
 console.log("Current User ID:", currentUser);
 
-// --- BookManager Object ---
+// ------------------------------
+// BookManager Object
+// ------------------------------
 const BookManager = {
   MAX_IMAGES: 5,
   MAX_SIZE_MB: 2,
@@ -135,7 +137,7 @@ function toRad(deg) {
 
 // Calculate distance (in km) between two coordinates using the Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of Earth in km
+  const R = 6371; // Earth's radius in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -145,7 +147,21 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Cache for geocoded locations to minimize API calls
+// Reverse geocode user's coordinates to get the city (or town/village)
+async function getCityFromCoordinates(lat, lon) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+    );
+    const data = await response.json();
+    return data.address.city || data.address.town || data.address.village || "";
+  } catch (e) {
+    console.error("Reverse geocoding failed", e);
+    return "";
+  }
+}
+
+// Cache for geocoding locations to reduce API calls
 const geocodeCache = {};
 
 // Get coordinates for a given location string using Nominatim Search API with caching
@@ -166,7 +182,6 @@ async function getCoordinatesForLocation(location) {
   } catch (e) {
     console.error("Geocoding failed for location:", location, e);
   }
-  // If no data returned, cache a null value so we don't repeatedly request it.
   geocodeCache[location] = null;
   return null;
 }
@@ -184,7 +199,7 @@ async function initializeBuyPage() {
     return;
   }
 
-  // Store all books locally for faster search filtering.
+  // Store all books locally.
   let allBooks = [];
 
   // Render books to the grid.
@@ -205,7 +220,7 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   });
 
-  // Search functionality using the local allBooks array.
+  // Search functionality.
   searchInput.addEventListener("input", () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const filteredBooks = allBooks.filter(
@@ -220,24 +235,48 @@ async function initializeBuyPage() {
     }
   });
 
-  // Helper: Sort books by distance from user's location.
-  async function sortBooksByDistance(userLat, userLon) {
-    // Map each book to a Promise resolving to the book with a distance property.
-    const booksWithDistance = await Promise.all(
-      allBooks.map(async (book) => {
+  // New sorting function: First, split listings based on whether their location contains the user's city.
+  async function sortBooksByProximity(userLat, userLon) {
+    const userCity = await getCityFromCoordinates(userLat, userLon);
+    console.log("User City:", userCity);
+    const groupA = [];
+    const groupB = [];
+
+    for (let book of allBooks) {
+      if (userCity && book.location.toLowerCase().includes(userCity.toLowerCase())) {
+        groupA.push(book);
+      } else {
+        groupB.push(book);
+      }
+    }
+
+    // For listings in Group A (matching city), compute distance.
+    const groupAWithDistance = await Promise.all(
+      groupA.map(async (book) => {
         const coords = await getCoordinatesForLocation(book.location);
-        // If geocoding fails, assign a very high distance so that book is placed at the bottom.
         const distance = coords
           ? calculateDistance(userLat, userLon, coords.lat, coords.lon)
           : Number.MAX_VALUE;
-        // (Optional) Log for debugging.
-        console.log(`Book: ${book.title}, Location: ${book.location}, Distance: ${distance}`);
         return { ...book, distance };
       })
     );
-    // Sort books: nearest (smallest distance) first.
-    booksWithDistance.sort((a, b) => a.distance - b.distance);
-    renderBooks(booksWithDistance);
+    groupAWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // For listings in Group B (non-matching), compute distance as fallback.
+    const groupBWithDistance = await Promise.all(
+      groupB.map(async (book) => {
+        const coords = await getCoordinatesForLocation(book.location);
+        const distance = coords
+          ? calculateDistance(userLat, userLon, coords.lat, coords.lon)
+          : Number.MAX_VALUE;
+        return { ...book, distance };
+      })
+    );
+    groupBWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // Concatenate both groups: matching city first.
+    const sortedBooks = [...groupAWithDistance, ...groupBWithDistance];
+    renderBooks(sortedBooks);
   }
 
   // Near Me button functionality.
@@ -248,7 +287,7 @@ async function initializeBuyPage() {
           async (position) => {
             const userLat = position.coords.latitude;
             const userLon = position.coords.longitude;
-            await sortBooksByDistance(userLat, userLon);
+            await sortBooksByProximity(userLat, userLon);
             alert("Books sorted by proximity from your location.");
           },
           (error) => {
@@ -261,7 +300,7 @@ async function initializeBuyPage() {
     });
   }
 
-  // Helper: Highlight new book if applicable.
+  // Highlight new book if applicable.
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get("new");
