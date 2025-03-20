@@ -122,7 +122,46 @@ const BookManager = {
   }
 };
 
-// --- Buy Page Implementation ---
+// ------------------------------
+// Helper Functions for "Near Me"
+// ------------------------------
+
+// Convert degrees to radians
+function toRad(deg) {
+  return deg * Math.PI / 180;
+}
+
+// Calculate distance (in km) between two coordinates using the Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of Earth in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Get coordinates for a given location string using Nominatim Search API
+async function getCoordinatesForLocation(location) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`
+    );
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    }
+  } catch (e) {
+    console.error("Geocoding failed for location:", location, e);
+  }
+  return null;
+}
+
+// ------------------------------
+// Buy Page Implementation
+// ------------------------------
 async function initializeBuyPage() {
   const bookGrid = document.getElementById('bookGrid');
   const searchInput = document.getElementById('searchInput');
@@ -136,13 +175,13 @@ async function initializeBuyPage() {
   // Store all books locally for faster search filtering.
   let allBooks = [];
 
-  // Helper function to render books
+  // Render books to the grid.
   function renderBooks(books) {
     bookGrid.innerHTML = books.map(createBookCard).join('');
     highlightNewBook();
   }
 
-  // Listen for Firestore updates
+  // Listen for Firestore updates.
   const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snapshot) => {
     if (snapshot.empty) {
@@ -154,7 +193,7 @@ async function initializeBuyPage() {
     renderBooks(allBooks);
   });
 
-  // Search functionality using the local allBooks array
+  // Search functionality using the local allBooks array.
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const filteredBooks = allBooks.filter(book =>
@@ -168,55 +207,45 @@ async function initializeBuyPage() {
     }
   });
 
-  // Helper: Reverse geocode to get city name from coordinates using Nominatim API
-  async function getCityFromCoordinates(lat, lon) {
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-      const data = await response.json();
-      // Try to use city, town, or village name
-      return data.address.city || data.address.town || data.address.village || "";
-    } catch (e) {
-      console.error("Reverse geocoding failed", e);
-      return "";
-    }
+  // Helper: Sort books by distance from user's location.
+  async function sortBooksByDistance(userLat, userLon) {
+    // For each book, attempt to get coordinates and calculate the distance.
+    const booksWithDistance = await Promise.all(
+      allBooks.map(async (book) => {
+        const coords = await getCoordinatesForLocation(book.location);
+        const distance = coords
+          ? calculateDistance(userLat, userLon, coords.lat, coords.lon)
+          : Infinity;
+        return { ...book, distance };
+      })
+    );
+    // Sort books: nearest (smallest distance) first.
+    booksWithDistance.sort((a, b) => a.distance - b.distance);
+    renderBooks(booksWithDistance);
   }
 
-  // Helper: Sort books so that those matching the detected city come first
-  function sortBooksByProximity(city) {
-    if (!city) return;
-    const sortedBooks = [...allBooks].sort((a, b) => {
-      const scoreA = a.location.toLowerCase().includes(city.toLowerCase()) ? 1 : 0;
-      const scoreB = b.location.toLowerCase().includes(city.toLowerCase()) ? 1 : 0;
-      // Books with a match (score 1) come first
-      return scoreB - scoreA;
-    });
-    renderBooks(sortedBooks);
-  }
-
-  // Near Me button functionality
+  // Near Me button functionality.
   if (nearMeBtn) {
-    nearMeBtn.addEventListener('click', () => {
+    nearMeBtn.addEventListener("click", () => {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const city = await getCityFromCoordinates(lat, lon);
-          if (city) {
-            sortBooksByProximity(city);
-            alert(`Showing books near ${city}`);
-          } else {
-            alert("Could not determine your city from location.");
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            await sortBooksByDistance(userLat, userLon);
+            alert("Books sorted by proximity from your location.");
+          },
+          (error) => {
+            alert("Geolocation error: " + error.message);
           }
-        }, (error) => {
-          alert("Geolocation error: " + error.message);
-        });
+        );
       } else {
         alert("Geolocation is not supported by your browser.");
       }
     });
   }
 
-  // Helper: Highlight new book if applicable
+  // Helper: Highlight new book if applicable.
   function highlightNewBook() {
     const urlParams = new URLSearchParams(window.location.search);
     const newId = urlParams.get('new');
@@ -231,7 +260,7 @@ async function initializeBuyPage() {
   }
 }
 
-// Helper: Create HTML for a single book card
+// Helper: Create HTML for a single book card.
 function createBookCard(book) {
   return `
     <div class="book-card" data-id="${book.id}">
@@ -260,11 +289,12 @@ function createBookCard(book) {
   `;
 }
 
-// Initialize pages on DOMContentLoaded
+// Initialize the page on DOMContentLoaded.
 document.addEventListener('DOMContentLoaded', () => {
-  // Only initialize the buy page if the bookGrid exists.
-  if (document.getElementById('bookGrid')) initializeBuyPage();
+  if (document.getElementById('bookGrid')) {
+    initializeBuyPage();
+  }
 });
 
-// Expose BookManager globally for inline HTML calls
+// Expose BookManager globally for inline HTML calls.
 window.BookManager = BookManager;
